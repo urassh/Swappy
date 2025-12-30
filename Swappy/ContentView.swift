@@ -8,14 +8,28 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var viewModel = GameViewModel()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ZStack {
+            switch viewModel.gameState {
+            case .keywordInput:
+                KeywordView(viewModel: viewModel)
+                
+            case .waitingRoom:
+                RoomView(viewModel: viewModel)
+                
+            case .videoCall:
+                VideoCallView(viewModel: viewModel)
+                
+            case .answerInput:
+                AnswerInputView(viewModel: viewModel)
+                
+            case .answerReveal:
+                AnswerView(viewModel: viewModel)
+            }
         }
-        .padding()
+        .animation(.easeInOut, value: viewModel.gameState)
     }
 }
 
