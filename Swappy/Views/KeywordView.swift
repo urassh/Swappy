@@ -47,7 +47,18 @@ struct KeywordView: View {
                         .foregroundColor(.white.opacity(0.9))
                 }
                 
-                Spacer()
+                // ルール説明
+                VStack(spacing: 8) {
+                    Text("ゲームのルール")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    Text("10秒間のビデオ通話で、誰と顔が入れ替わっているか当てよう！")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
                 
                 // 入力フォーム
                 VStack(spacing: 20) {
@@ -107,19 +118,6 @@ struct KeywordView: View {
                     .opacity(viewModel.keyword.isEmpty || viewModel.userName.isEmpty ? 0.6 : 1.0)
                 }
                 .padding(.horizontal, 30)
-                
-                // ルール説明
-                VStack(spacing: 8) {
-                    Text("ゲームのルール")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    Text("10秒間のビデオ通話で、誰と顔が入れ替わっているか当てよう！")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.8))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                }
                 
                 Spacer()
             }
