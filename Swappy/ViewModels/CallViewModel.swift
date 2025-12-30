@@ -42,9 +42,10 @@ class GameViewModel {
         if let index = users.firstIndex(where: { $0.id == "1" }) {
             users[index].isReady.toggle()
             
-            // 全員が準備完了したらビデオ通話開始
+            // 全員が準備完了したら役職を割り当てて役職表示画面へ
             if allUsersReady {
-                startVideoCall()
+                assignRoles()
+                gameState = .roleReveal
             }
         }
     }
@@ -53,14 +54,26 @@ class GameViewModel {
         !users.isEmpty && users.allSatisfy { $0.isReady }
     }
     
+    // 役職を割り当てる
+    func assignRoles() {
+        // ランダムに1人を人狼に、他を市民にする
+        let werewolfIndex = Int.random(in: 0..<users.count)
+        
+        for (index, user) in users.enumerated() {
+            let role: Role = (index == werewolfIndex) ? .werewolf : .villager
+            users[index].role = role
+            
+            // 人狼のIDを記録（FaceSwapに使用）
+            if role == .werewolf {
+                swappedUserId = user.id
+            }
+        }
+    }
+    
     // ビデオ通話開始
     func startVideoCall() {
         gameState = .videoCall
         videoCallTimeRemaining = 10
-        
-        // ランダムにユーザーを選択（自分以外）
-        let otherUsers = users.filter { $0.id != "1" }
-        swappedUserId = otherUsers.randomElement()?.id
         
         // 10秒のカウントダウン
         startCountdown()
@@ -118,6 +131,7 @@ class GameViewModel {
     func resetGame() {
         gameState = .keywordInput
         keyword = ""
+        userName = ""
         users = []
         swappedUserId = nil
         myAnswer = nil

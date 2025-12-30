@@ -26,11 +26,11 @@ struct RoomView: View {
             VStack(spacing: 30) {
                 // ヘッダー
                 VStack(spacing: 10) {
-                    Text("待機ロビー")
+                    Text("村の集会所")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                     
-                    Text("ルーム: \(viewModel.keyword)")
+                    Text("村: \(viewModel.keyword)")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
                 }
@@ -132,7 +132,7 @@ struct RoomView: View {
                     
                     // 全員準備完了の表示
                     if viewModel.allUsersReady {
-                        Text("まもなくゲーム開始...")
+                        Text("全員集合！役職を配布します...")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
                             .padding()

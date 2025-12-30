@@ -68,7 +68,7 @@ struct VideoCallView: View {
                 .padding(.vertical, 20)
                 
                 // ヒントテキスト
-                Text("誰と入れ替わっているか覚えておこう！")
+                Text("誰が人狼(顔が変わった人)か見極めよう！")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
                     .padding()

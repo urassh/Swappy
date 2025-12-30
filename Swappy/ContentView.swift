@@ -19,6 +19,9 @@ struct ContentView: View {
             case .waitingRoom:
                 RoomView(viewModel: viewModel)
                 
+            case .roleReveal:
+                RoleRevealView(viewModel: viewModel)
+                
             case .videoCall:
                 VideoCallView(viewModel: viewModel)
                 

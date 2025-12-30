@@ -58,7 +58,7 @@ struct AnswerView: View {
                         
                         // 正解発表
                         VStack(spacing: 10) {
-                            Text("入れ替わっていたのは...")
+                            Text("人狼(顔が変わった人)は...")
                                 .font(.system(size: 18))
                                 .foregroundColor(.white.opacity(0.9))
                             

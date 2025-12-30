@@ -33,12 +33,12 @@ struct AnswerInputView: View {
                         .font(.system(size: 60))
                         .foregroundColor(.white)
                     
-                    Text("誰と入れ替わっていた？")
+                    Text("人狼は誰だ？")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                     
-                    Text("入れ替わっていたと思う人を選んでください")
+                    Text("顔が入れ替わっていた人を選んでください")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)

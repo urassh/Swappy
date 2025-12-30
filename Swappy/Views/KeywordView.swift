@@ -38,11 +38,11 @@ struct KeywordView: View {
                             .foregroundColor(.white)
                     }
                     
-                    Text("Swappy")
+                    Text("Swappy人狼")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
                     
-                    Text("顔入れ替わりゲーム")
+                    Text("Face Swap人狼ゲーム")
                         .font(.system(size: 18))
                         .foregroundColor(.white.opacity(0.9))
                 }
@@ -53,7 +53,7 @@ struct KeywordView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
                     
-                    Text("10秒間のビデオ通話で、誰と顔が入れ替わっているか当てよう！")
+                    Text("10秒間のビデオ通話で、1人だけ顔が入れ替わります。\n人狼(顔が変わった人)を見つけ出そう！")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
