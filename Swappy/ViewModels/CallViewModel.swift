@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import AgoraRtcKit
 
 @Observable
 class GameViewModel {
@@ -15,6 +16,10 @@ class GameViewModel {
     var userName: String = ""
     var users: [User] = []
     var isMicMuted: Bool = false
+    
+    // Agora Manager
+    private var agoraManager: AgoraManager?
+    private let appId = "test-mode"
     
     // ゲーム関連
     var swappedUserId: String? = nil  // 入れ替わっているユーザーのID
@@ -25,6 +30,19 @@ class GameViewModel {
     // 合言葉を入力してロビーへ
     func enterRoom() {
         gameState = .waitingRoom
+        
+        // Agora Managerをセットアップ
+        setupAgoraManager()
+        
+        // チャンネルに参加（keywordをchannelIdとして使用）
+        Task {
+            do {
+                try await agoraManager?.joinChannel(keyword, uid: 0, role: "publisher")
+                print("🎤 Joined voice channel: \(keyword)")
+            } catch {
+                print("❌ Failed to join channel: \(error)")
+            }
+        }
         
         // シミュレーション: 他のユーザーを追加
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -129,6 +147,9 @@ class GameViewModel {
     
     // ゲームをリセット
     func resetGame() {
+        // Agoraチャンネルから退出
+        cleanupAgoraManager()
+        
         gameState = .keywordInput
         keyword = ""
         userName = ""
@@ -140,6 +161,55 @@ class GameViewModel {
     }
     
     func toggleMic() {
+        if isMicMuted {
+            agoraManager?.audio?.unmute()
+        } else {
+            agoraManager?.audio?.mute()
+        }
         isMicMuted.toggle()
+    }
+    
+    // Agora Managerをセットアップ
+    func setupAgoraManager() {
+        let tokenRepository = AgoraTestTokenRepository()
+        
+        let builder = AgoraManagerBuilder(appId: appId, tokenRepository: tokenRepository)
+        agoraManager = builder
+            .withAudio(delegate: nil)
+            .withChannelDelegate(self)
+            .build()
+    }
+    
+    // Agora Managerのクリーンアップ
+    func cleanupAgoraManager() {
+        agoraManager?.leaveChannel()
+        agoraManager = nil
+    }
+}
+
+// MARK: - ChannelEventDelegate
+
+extension GameViewModel: ChannelEventDelegate {
+    func didJoinChannel(uid: UInt) {
+        print("✅ Successfully joined channel with uid: \(uid)")
+    }
+    
+    func didUserJoin(uid: UInt) {
+        print("👤 User joined: \(uid)")
+        // Note: 実際の実装では、ユーザー情報を取得してusers配列に追加する
+    }
+    
+    func didUserLeave(uid: UInt) {
+        print("👋 User left: \(uid)")
+        // Note: 実際の実装では、users配列から該当ユーザーを削除する
+    }
+    
+    func didLeaveChannel() {
+        print("📤 Left channel")
+    }
+    
+    func didOccurError(code: AgoraErrorCode) {
+        print("❌ Agora error occurred: \(code.rawValue)")
+        // Note: 必要に応じてエラーをユーザーに通知
     }
 }

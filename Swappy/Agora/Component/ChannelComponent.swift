@@ -39,8 +39,12 @@ class ChannelComponent: AgoraComponent {
             privilegeExpirationInSeconds: nil
         )
         
-        print("Fetched token: \(token)")
-        
+        if (token == nil) {
+            print("Token is nil (if you are using test mode with agora, this is normal)")
+        } else {
+            print("Fetched token: \(token!)")
+        }
+
         let option = AgoraRtcChannelMediaOptions()
         option.channelProfile = .communication
         option.clientRoleType = .broadcaster
