@@ -12,21 +12,25 @@ import Combine
 @Observable
 class VideoCallViewModel {
     var timeRemaining: Int = 10
+    var users: [User] = []
     
     private let gameRepository: GameRepositoryProtocol
     private var cancellables = Set<AnyCancellable>()
     
-    private(set) var users: [User]
     private(set) var swappedUserId: String?
     
     init(
-        gameRepository: GameRepositoryProtocol,
-        users: [User],
-        swappedUserId: String?
+        usersPublisher: AnyPublisher<[User], Never>,
+        swappedUserId: String?,
+        gameRepository: GameRepositoryProtocol
     ) {
-        self.gameRepository = gameRepository
-        self.users = users
         self.swappedUserId = swappedUserId
+        self.gameRepository = gameRepository
+        
+        // usersの購読
+        usersPublisher
+            .assign(to: \VideoCallViewModel.users, on: self)
+            .store(in: &cancellables)
         
         setupEventSubscription()
     }
@@ -40,10 +44,5 @@ class VideoCallViewModel {
                 }
             }
             .store(in: &cancellables)
-    }
-    
-    // Coordinatorからの更新を受け取る
-    func updateUsers(_ users: [User]) {
-        self.users = users
     }
 }

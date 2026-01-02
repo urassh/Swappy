@@ -6,9 +6,26 @@
 //
 
 import SwiftUI
+import Combine
 
 struct AnswerView: View {
-    @Bindable var viewModel: AnswerRevealViewModel
+    @State private var viewModel: AnswerRevealViewModel
+    
+    init(
+        usersPublisher: AnyPublisher<[User], Never>,
+        allAnswers: [PlayerAnswer],
+        swappedUserId: String,
+        myUserId: String,
+        onRestart: @escaping () -> Void
+    ) {
+        self.viewModel = AnswerRevealViewModel(
+            usersPublisher: usersPublisher,
+            allAnswers: allAnswers,
+            swappedUserId: swappedUserId,
+            myUserId: myUserId,
+            onRestart: onRestart
+        )
+    }
     
     var correctUser: User? {
         viewModel.correctUser

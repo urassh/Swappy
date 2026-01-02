@@ -6,28 +6,35 @@
 //
 
 import Foundation
+import Combine
 
 /// 結果表示画面のViewModel
 @Observable
 class AnswerRevealViewModel {
+    var users: [User] = []
+    
     private let allAnswers: [PlayerAnswer]
     private let swappedUserId: String
-    let users: [User]  // public に変更
     private let myUserId: String
     private let onRestart: () -> Void
+    private var cancellables = Set<AnyCancellable>()
     
     init(
+        usersPublisher: AnyPublisher<[User], Never>,
         allAnswers: [PlayerAnswer],
         swappedUserId: String,
-        users: [User],
         myUserId: String,
         onRestart: @escaping () -> Void
     ) {
         self.allAnswers = allAnswers
         self.swappedUserId = swappedUserId
-        self.users = users
         self.myUserId = myUserId
         self.onRestart = onRestart
+        
+        // usersの購読
+        usersPublisher
+            .assign(to: \AnswerRevealViewModel.users, on: self)
+            .store(in: &cancellables)
     }
     
     var answers: [PlayerAnswer] {

@@ -8,8 +8,15 @@
 import SwiftUI
 
 struct RoleRevealView: View {
-    @Bindable var viewModel: RoleRevealViewModel
+    @State private var viewModel: RoleRevealViewModel
     @State private var showRole = false
+    
+    init(myRole: Role?, onStartVideoCall: @escaping () -> Void) {
+        self.viewModel = RoleRevealViewModel(
+            myRole: myRole,
+            onStartVideoCall: onStartVideoCall
+        )
+    }
     
     var body: some View {
         ZStack {

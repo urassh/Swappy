@@ -6,10 +6,23 @@
 //
 
 import SwiftUI
+import Combine
 
 struct AnswerInputView: View {
-    @Bindable var viewModel: AnswerInputViewModel
+    @State private var viewModel: AnswerInputViewModel
     @State private var selectedUserId: String? = nil
+    
+    init(
+        usersPublisher: AnyPublisher<[User], Never>,
+        myUserId: String,
+        onSubmit: @escaping (String) -> Void
+    ) {
+        self.viewModel = AnswerInputViewModel(
+            usersPublisher: usersPublisher,
+            myUserId: myUserId,
+            onSubmit: onSubmit
+        )
+    }
     
     var body: some View {
         ZStack {

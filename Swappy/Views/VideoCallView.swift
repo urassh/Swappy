@@ -6,9 +6,22 @@
 //
 
 import SwiftUI
+import Combine
 
 struct VideoCallView: View {
-    @Bindable var viewModel: VideoCallViewModel
+    @State private var viewModel: VideoCallViewModel
+    
+    init(
+        usersPublisher: AnyPublisher<[User], Never>,
+        swappedUserId: String?,
+        gameRepository: GameRepositoryProtocol
+    ) {
+        self.viewModel = VideoCallViewModel(
+            usersPublisher: usersPublisher,
+            swappedUserId: swappedUserId,
+            gameRepository: gameRepository
+        )
+    }
     
     var body: some View {
         ZStack {

@@ -6,24 +6,30 @@
 //
 
 import Foundation
+import Combine
 
 /// 回答入力画面のViewModel
 @Observable
 class AnswerInputViewModel {
     var selectedUserId: String? = nil
+    var users: [User] = []
     
-    private let gameRepository: GameRepositoryProtocol
     private let myUserId: String
-    private(set) var users: [User]
+    private let onSubmit: (String) -> Void
+    private var cancellables = Set<AnyCancellable>()
     
     init(
-        gameRepository: GameRepositoryProtocol,
-        users: [User],
-        myUserId: String
+        usersPublisher: AnyPublisher<[User], Never>,
+        myUserId: String,
+        onSubmit: @escaping (String) -> Void
     ) {
-        self.gameRepository = gameRepository
-        self.users = users
         self.myUserId = myUserId
+        self.onSubmit = onSubmit
+        
+        // usersの購読
+        usersPublisher
+            .assign(to: \AnswerInputViewModel.users, on: self)
+            .store(in: &cancellables)
     }
     
     var selectableUsers: [User] {
@@ -36,13 +42,6 @@ class AnswerInputViewModel {
     
     func submitAnswer() {
         guard let userId = selectedUserId else { return }
-        
-        Task {
-            do {
-                try await gameRepository.submitAnswer(userId: userId)
-            } catch {
-                print("❌ Failed to submit answer: \(error)")
-            }
-        }
+        onSubmit(userId)
     }
 }

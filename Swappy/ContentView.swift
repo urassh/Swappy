@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var coordinator = GameCoordinator(gameRepository: MockGameRepository())
-    @State private var videoCallViewModel: VideoCallViewModel?
     
     var body: some View {
         ZStack {
@@ -46,51 +45,39 @@ struct ContentView: View {
                 
             case .roleReveal:
                 RoleRevealView(
-                    viewModel: RoleRevealViewModel(
-                        myRole: coordinator.myRole,
-                        onStartVideoCall: {
-                            // MockRepositoryが自動的にvideoCallStartedイベントを送信
-                        }
-                    )
+                    myRole: coordinator.myRole,
+                    onStartVideoCall: {
+                        // MockRepositoryが自動的にvideoCallStartedイベントを送信
+                    }
                 )
                 
             case .videoCall:
-                if videoCallViewModel == nil {
-                    Color.clear.onAppear {
-                        videoCallViewModel = VideoCallViewModel(
-                            gameRepository: coordinator.gameRepository,
-                            users: coordinator.users,
-                            swappedUserId: coordinator.swappedUserId
-                        )
-                    }
-                }
-                if let vm = videoCallViewModel {
-                    VideoCallView(viewModel: vm)
-                        .onChange(of: coordinator.users) { _, newUsers in
-                            vm.updateUsers(newUsers)
-                        }
-                }
+                VideoCallView(
+                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
+                    swappedUserId: coordinator.swappedUserId,
+                    gameRepository: coordinator.gameRepository
+                )
                 
             case .answerInput:
                 AnswerInputView(
-                    viewModel: AnswerInputViewModel(
-                        gameRepository: coordinator.gameRepository,
-                        users: coordinator.users,
-                        myUserId: coordinator.myUserId
-                    )
+                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
+                    myUserId: coordinator.myUserId,
+                    onSubmit: { userId in
+                        Task {
+                            try? await coordinator.gameRepository.submitAnswer(userId: userId)
+                        }
+                    }
                 )
                 
             case .answerReveal:
                 AnswerView(
-                    viewModel: AnswerRevealViewModel(
-                        allAnswers: coordinator.allAnswers,
-                        swappedUserId: coordinator.swappedUserId ?? "",
-                        users: coordinator.users,
-                        myUserId: coordinator.myUserId,
-                        onRestart: {
-                            coordinator.resetGame()
-                        }
-                    )
+                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
+                    allAnswers: coordinator.allAnswers,
+                    swappedUserId: coordinator.swappedUserId ?? "",
+                    myUserId: coordinator.myUserId,
+                    onRestart: {
+                        coordinator.resetGame()
+                    }
                 )
             }
         }
