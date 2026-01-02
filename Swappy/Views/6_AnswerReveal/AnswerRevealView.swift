@@ -1,5 +1,5 @@
 //
-//  AnswerView.swift
+//  AnswerRevealView.swift
 //  Swappy
 //
 //  Created by 浦山秀斗 on 2025/12/30.
@@ -8,7 +8,7 @@
 import SwiftUI
 import Combine
 
-struct AnswerView: View {
+struct AnswerRevealView: View {
     @State private var viewModel: AnswerRevealViewModel
     
     init(

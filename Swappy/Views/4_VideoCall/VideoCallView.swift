@@ -14,12 +14,14 @@ struct VideoCallView: View {
     init(
         usersPublisher: AnyPublisher<[User], Never>,
         swappedUserId: String?,
-        gameRepository: GameRepositoryProtocol
+        gameRepository: GameRepositoryProtocol,
+        onTimeUp: @escaping () -> Void
     ) {
         self.viewModel = VideoCallViewModel(
             usersPublisher: usersPublisher,
             swappedUserId: swappedUserId,
-            gameRepository: gameRepository
+            gameRepository: gameRepository,
+            onTimeUp: onTimeUp
         )
     }
     
@@ -79,8 +81,7 @@ struct VideoCallView: View {
                     }
                 }
                 .padding(.vertical, 20)
-                
-                // ヒントテキスト
+
                 Text("誰が人狼(顔が変わった人)か見極めよう！")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)

@@ -28,6 +28,12 @@ protocol GameRepositoryProtocol {
     /// ミュート状態をトグルする
     func toggleMute(isMuted: Bool) async throws
     
+    /// ビデオ通話を開始する
+    func startVideoCall() async throws
+    
+    /// 回答フェーズを開始する
+    func startAnswerPhase() async throws
+    
     /// 回答を送信する
     /// - Parameter userId: 選択したユーザーのID
     func submitAnswer(userId: String) async throws

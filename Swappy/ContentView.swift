@@ -47,7 +47,9 @@ struct ContentView: View {
                 RoleRevealView(
                     myRole: coordinator.myRole,
                     onStartVideoCall: {
-                        // MockRepositoryが自動的にvideoCallStartedイベントを送信
+                        Task {
+                            try? await coordinator.gameRepository.startVideoCall()
+                        }
                     }
                 )
                 
@@ -55,7 +57,12 @@ struct ContentView: View {
                 VideoCallView(
                     usersPublisher: coordinator.$users.eraseToAnyPublisher(),
                     swappedUserId: coordinator.swappedUserId,
-                    gameRepository: coordinator.gameRepository
+                    gameRepository: coordinator.gameRepository,
+                    onTimeUp: {
+                        Task {
+                            try? await coordinator.gameRepository.startAnswerPhase()
+                        }
+                    }
                 )
                 
             case .answerInput:
@@ -70,7 +77,7 @@ struct ContentView: View {
                 )
                 
             case .answerReveal:
-                AnswerView(
+                AnswerRevealView(
                     usersPublisher: coordinator.$users.eraseToAnyPublisher(),
                     allAnswers: coordinator.allAnswers,
                     swappedUserId: coordinator.swappedUserId ?? "",

@@ -27,9 +27,6 @@ enum GameEvent {
     /// ビデオ通話が開始された
     case videoCallStarted
     
-    /// ビデオ通話のカウントダウン
-    case videoCallCountdown(timeRemaining: Int)
-    
     /// 回答フェーズに移行
     case answerPhaseStarted
     

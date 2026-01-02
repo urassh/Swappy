@@ -115,33 +115,14 @@ class MockGameRepository: GameRepositoryProtocol {
         
         // 役職割り当てイベントを送信
         eventSubject.send(.rolesAssigned(users: users, swappedUserId: swappedUserId))
-        
-        // シミュレーション: 5秒後にビデオ通話開始
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            self?.startVideoCall(swappedUserId: swappedUserId)
-        }
     }
     
-    private func startVideoCall(swappedUserId: String) {
+    func startVideoCall() async throws {
         eventSubject.send(.videoCallStarted)
-        
-        var timeRemaining = 10
-        videoCallTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            guard let self = self else {
-                timer.invalidate()
-                return
-            }
-            
-            self.eventSubject.send(.videoCallCountdown(timeRemaining: timeRemaining))
-            
-            if timeRemaining > 0 {
-                timeRemaining -= 1
-            } else {
-                timer.invalidate()
-                self.videoCallTimer = nil
-                self.eventSubject.send(.answerPhaseStarted)
-            }
-        }
+    }
+    
+    func startAnswerPhase() async throws {
+        eventSubject.send(.answerPhaseStarted)
     }
     
     private func revealAnswers(myAnswer: String) {
