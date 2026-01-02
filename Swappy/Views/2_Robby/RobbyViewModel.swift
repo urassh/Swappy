@@ -13,9 +13,9 @@ import Combine
 class RobbyViewModel {
     var isMicMuted: Bool = false
     var users: [User] = []
+    var isCallReady: Bool = false  // Agora(and Akool)の接続準備完了状態
     
     private let myUserId: String
-    private let onToggleReady: () -> Void
     private let onMuteMic: () -> Void
     private let onUnmuteMic: () -> Void
     private var cancellables = Set<AnyCancellable>()
@@ -23,12 +23,10 @@ class RobbyViewModel {
     init(
         usersPublisher: AnyPublisher<[User], Never>,
         myUserId: String,
-        onToggleReady: @escaping () -> Void,
         onMuteMic: @escaping () -> Void,
         onUnmuteMic: @escaping () -> Void
     ) {
         self.myUserId = myUserId
-        self.onToggleReady = onToggleReady
         self.onMuteMic = onMuteMic
         self.onUnmuteMic = onUnmuteMic
         
@@ -49,10 +47,6 @@ class RobbyViewModel {
     }
     
     // MARK: - Actions
-    
-    func toggleReady() {
-        onToggleReady()
-    }
     
     func toggleMic() {
         if isMicMuted {

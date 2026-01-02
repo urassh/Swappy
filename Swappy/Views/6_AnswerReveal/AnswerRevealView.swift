@@ -195,16 +195,20 @@ struct AnswerRevealView: View {
         User(id: "4", name: "次郎")
     ]
     
-    return AnswerView(viewModel: AnswerRevealViewModel(
-        allAnswers: [
-            PlayerAnswer(id: "1", playerName: "あなた", selectedUserId: "2", isCorrect: true),
-            PlayerAnswer(id: "2", playerName: "太郎", selectedUserId: "3", isCorrect: false),
-            PlayerAnswer(id: "3", playerName: "花子", selectedUserId: "2", isCorrect: true),
-            PlayerAnswer(id: "4", playerName: "次郎", selectedUserId: "4", isCorrect: false)
-        ],
+    let answers = [
+        PlayerAnswer(id: "1", playerName: "あなた", selectedUserId: "2", isCorrect: true),
+        PlayerAnswer(id: "2", playerName: "太郎", selectedUserId: "3", isCorrect: false),
+        PlayerAnswer(id: "3", playerName: "花子", selectedUserId: "2", isCorrect: true),
+        PlayerAnswer(id: "4", playerName: "次郎", selectedUserId: "2", isCorrect: true)
+    ]
+    
+    let usersPublisher = Just(users).eraseToAnyPublisher()
+    
+    return AnswerRevealView(
+        usersPublisher: usersPublisher,
+        allAnswers: answers,
         swappedUserId: "2",
-        users: users,
         myUserId: "1",
-        onRestart: {}
-    ))
+        onRestart: { print("Restart tapped") }
+    )
 }

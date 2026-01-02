@@ -199,9 +199,7 @@ struct RoleRevealView: View {
 
 #Preview {
     RoleRevealView(
-        viewModel: RoleRevealViewModel(
-            myRole: .werewolf,
-            onStartVideoCall: {}
-        )
+        myRole: .werewolf,
+        onStartVideoCall: { print("Video call started") }
     )
 }

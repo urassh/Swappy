@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 import AgoraRtcKit
-import Combine
 
 /// ゲーム全体のナビゲーションと共有データを管理するCoordinator
 @Observable
@@ -33,66 +32,77 @@ class GameCoordinator {
     // MARK: - Private Properties
     
     private let appId = "test-mode"
-    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     
     init(gameRepository: GameRepositoryProtocol = MockGameRepository()) {
         self.gameRepository = gameRepository
-        setupEventSubscription()
+        setupEventHandlers()
     }
     
-    // MARK: - Event Subscription
+    // MARK: - Event Handlers Setup
     
-    private func setupEventSubscription() {
-        gameRepository.eventPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] event in
-                self?.handleGameEvent(event)
+    private func setupEventHandlers() {
+        gameRepository.setEventHandlers(
+            onUserJoined: { [weak self] user in
+                DispatchQueue.main.async {
+                    self?.handleUserJoined(user)
+                }
+            },
+            onUserLeft: { [weak self] userId in
+                DispatchQueue.main.async {
+                    self?.handleUserLeft(userId)
+                }
+            },
+            onUserReadyStateChanged: { [weak self] userId, isReady in
+                DispatchQueue.main.async {
+                    self?.handleUserReadyStateChanged(userId: userId, isReady: isReady)
+                }
+            },
+            onUserMuteStateChanged: { [weak self] userId, isMuted in
+                DispatchQueue.main.async {
+                    self?.handleUserMuteStateChanged(userId: userId, isMuted: isMuted)
+                }
+            },
+            onRolesAssigned: { [weak self] userRoles, swappedUserId in
+                DispatchQueue.main.async {
+                    self?.handleRolesAssigned(userRoles: userRoles, swappedUserId: swappedUserId)
+                }
+            },
+            onVideoCallStarted: { [weak self] in
+                DispatchQueue.main.async {
+                    self?.handleVideoCallStarted()
+                }
+            },
+            onVideoCallCountdown: { timeRemaining in
+                // VideoCallViewModelで処理するため、ここでは何もしない
+                print("⏱️ Video call countdown: \(timeRemaining)")
+            },
+            onAnswerPhaseStarted: { [weak self] in
+                DispatchQueue.main.async {
+                    self?.handleAnswerPhaseStarted()
+                }
+            },
+            onAnswerSubmitted: { userId, selectedUserId in
+                // 特に処理なし
+                print("📝 Answer submitted: \(userId) -> \(selectedUserId)")
+            },
+            onAnswerRevealed: { [weak self] answers, swappedUserId in
+                DispatchQueue.main.async {
+                    self?.handleAnswerRevealed(answers: answers, swappedUserId: swappedUserId)
+                }
+            },
+            onGameReset: { [weak self] in
+                DispatchQueue.main.async {
+                    self?.handleGameReset()
+                }
+            },
+            onError: { [weak self] message in
+                DispatchQueue.main.async {
+                    self?.handleError(message)
+                }
             }
-            .store(in: &cancellables)
-    }
-    
-    private func handleGameEvent(_ event: GameEvent) {
-        switch event {
-        case .userJoined(let user):
-            handleUserJoined(user)
-            
-        case .userLeft(let userId):
-            handleUserLeft(userId)
-            
-        case .userReadyStateChanged(let userId, let isReady):
-            handleUserReadyStateChanged(userId: userId, isReady: isReady)
-            
-        case .userMuteStateChanged(let userId, let isMuted):
-            handleUserMuteStateChanged(userId: userId, isMuted: isMuted)
-            
-        case .rolesAssigned(let users, let swappedUserId):
-            handleRolesAssigned(users: users, swappedUserId: swappedUserId)
-            
-        case .videoCallStarted:
-            handleVideoCallStarted()
-            
-        case .videoCallCountdown(_):
-            // VideoCallViewModelで処理
-            break
-            
-        case .answerPhaseStarted:
-            handleAnswerPhaseStarted()
-            
-        case .answerSubmitted(_, _):
-            // 特に処理なし
-            break
-            
-        case .answerRevealed(let answers, let swappedUserId):
-            handleAnswerRevealed(answers: answers, swappedUserId: swappedUserId)
-            
-        case .gameReset:
-            handleGameReset()
-            
-        case .error(let message):
-            handleError(message)
-        }
+        )
     }
     
     // MARK: - Event Handlers
@@ -119,8 +129,13 @@ class GameCoordinator {
         }
     }
     
-    private func handleRolesAssigned(users: [User], swappedUserId: String) {
-        self.users = users
+    private func handleRolesAssigned(userRoles: [String: Role], swappedUserId: String) {
+        // 各ユーザーにロールを割り当て
+        for (userId, role) in userRoles {
+            if let index = users.firstIndex(where: { $0.id == userId }) {
+                users[index].role = role
+            }
+        }
         self.swappedUserId = swappedUserId
         navigate(to: .roleReveal)
     }

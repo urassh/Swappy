@@ -148,14 +148,17 @@ struct AnswerInputView: View {
 }
 
 #Preview {
-    AnswerInputView(viewModel: AnswerInputViewModel(
-        gameRepository: MockGameRepository(),
-        users: [
-            User(id: "1", name: "あなた"),
-            User(id: "2", name: "太郎"),
-            User(id: "3", name: "花子"),
-            User(id: "4", name: "次郎")
-        ],
-        myUserId: "1"
-    ))
+    let users = [
+        User(id: "1", name: "あなた"),
+        User(id: "2", name: "太郎"),
+        User(id: "3", name: "花子"),
+        User(id: "4", name: "次郎")
+    ]
+    let usersPublisher = Just(users).eraseToAnyPublisher()
+    
+    return AnswerInputView(
+        usersPublisher: usersPublisher,
+        myUserId: "1",
+        onSubmit: { userId in print("Selected user: \(userId)") }
+    )
 }

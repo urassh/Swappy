@@ -13,10 +13,14 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
     
     // MARK: - Properties
     
-    private let eventSubject = PassthroughSubject<GameEvent, Never>()
-    var eventPublisher: AnyPublisher<GameEvent, Never> {
-        eventSubject.eraseToAnyPublisher()
-    }
+    // イベントハンドラ
+    private var onUserJoined: ((User) -> Void)?
+    private var onUserLeft: ((User) -> Void)?
+    private var onUserReadyStateChanged: ((User, Bool) -> Void)?
+    private var onUserMuteStateChanged: ((String, Bool) -> Void)?
+    private var onRolesAssigned: (([String: Role], String) -> Void)?
+    private var onAnswerRevealed: (([PlayerAnswer]) -> Void)?
+    private var onError: ((String) -> Void)?
     
     private var webSocketTask: URLSessionWebSocketTask?
     private let baseURL: String
@@ -32,8 +36,27 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
     
     // MARK: - GameRepositoryProtocol
     
-    func joinRoom(keyword: String, userName: String) async throws {
+    func setEventHandlers(
+        onUserJoined: @escaping (User) -> Void,
+        onUserLeft: @escaping (User) -> Void,
+        onUserReadyStateChanged: @escaping (User, Bool) -> Void,
+        onUserMuteStateChanged: @escaping (String, Bool) -> Void,
+        onRolesAssigned: @escaping ([String: Role], String) -> Void,
+        onAnswerRevealed: @escaping ([PlayerAnswer]) -> Void,
+        onError: @escaping (String) -> Void
+    ) {
+        self.onUserJoined = onUserJoined
+        self.onUserLeft = onUserLeft
+        self.onUserReadyStateChanged = onUserReadyStateChanged
+        self.onUserMuteStateChanged = onUserMuteStateChanged
+        self.onRolesAssigned = onRolesAssigned
+        self.onAnswerRevealed = onAnswerRevealed
+        self.onError = onError
+    }
+    
+    func joinRoom(keyword: String, me: User) async throws {
         self.currentKeyword = keyword
+        self.currentUserId = me.id
         
         // WebSocket接続を確立
         guard let url = URL(string: "\(baseURL)/game/\(keyword)") else {
@@ -50,7 +73,12 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
         // 参加メッセージを送信
         let joinMessage: [String: Any] = [
             "type": "join",
-            "userName": userName
+            "user": [
+                "id": me.id,
+                "name": me.name,
+                "isReady": me.isReady,
+                "isMuted": me.isMuted
+            ]
         ]
         try await sendMessage(joinMessage)
     }
@@ -118,7 +146,7 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
                 
             case .failure(let error):
                 print("WebSocket receive error: \(error)")
-                self?.eventSubject.send(.error(message: error.localizedDescription))
+                self?.onError?(error.localizedDescription)
             }
         }
     }
@@ -145,49 +173,44 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
                 return
             }
             
-            let event: GameEvent? = switch type {
+            switch type {
             case "userJoined":
-                parseUserJoined(from: json)
+                if let user = parseUserJoined(from: json) {
+                    onUserJoined?(user)
+                }
                 
             case "userLeft":
-                parseUserLeft(from: json)
+                if let user = parseUserLeft(from: json) {
+                    onUserLeft?(user)
+                }
                 
             case "userReadyStateChanged":
-                parseUserReadyStateChanged(from: json)
+                if let (user, isReady) = parseUserReadyStateChanged(from: json) {
+                    onUserReadyStateChanged?(user, isReady)
+                }
                 
             case "userMuteStateChanged":
-                parseUserMuteStateChanged(from: json)
+                if let (userId, isMuted) = parseUserMuteStateChanged(from: json) {
+                    onUserMuteStateChanged?(userId, isMuted)
+                }
                 
             case "rolesAssigned":
-                parseRolesAssigned(from: json)
-                
-            case "videoCallStarted":
-                .videoCallStarted
-                
-            case "videoCallCountdown":
-                parseVideoCallCountdown(from: json)
-                
-            case "answerPhaseStarted":
-                .answerPhaseStarted
-                
-            case "answerSubmitted":
-                parseAnswerSubmitted(from: json)
+                if let (userRoles, swappedUserId) = parseRolesAssigned(from: json) {
+                    onRolesAssigned?(userRoles, swappedUserId)
+                }
                 
             case "answerRevealed":
-                parseAnswerRevealed(from: json)
-                
-            case "gameReset":
-                .gameReset
+                if let answers = parseAnswerRevealed(from: json) {
+                    onAnswerRevealed?(answers)
+                }
                 
             case "error":
-                parseError(from: json)
+                if let message = parseError(from: json) {
+                    onError?(message)
+                }
                 
             default:
-                nil
-            }
-            
-            if let event = event {
-                eventSubject.send(event)
+                break
             }
             
         } catch {
@@ -197,7 +220,7 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
     
     // MARK: - Parsing Methods
     
-    private func parseUserJoined(from json: [String: Any]) -> GameEvent? {
+    private func parseUserJoined(from json: [String: Any]) -> User? {
         guard let userData = json["user"] as? [String: Any],
               let id = userData["id"] as? String,
               let name = userData["name"] as? String else {
@@ -207,74 +230,62 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
         let isMuted = userData["isMuted"] as? Bool ?? false
         let isReady = userData["isReady"] as? Bool ?? false
         
+        return User(id: id, name: name, isMuted: isMuted, isReady: isReady)
+    }
+    
+    private func parseUserLeft(from json: [String: Any]) -> User? {
+        guard let userData = json["user"] as? [String: Any],
+              let id = userData["id"] as? String,
+              let name = userData["name"] as? String else {
+            return nil
+        }
+        
+        let isMuted = userData["isMuted"] as? Bool ?? false
+        let isReady = userData["isReady"] as? Bool ?? false
+        
+        return User(id: id, name: name, isMuted: isMuted, isReady: isReady)
+    }
+    
+    private func parseUserReadyStateChanged(from json: [String: Any]) -> (User, Bool)? {
+        guard let userData = json["user"] as? [String: Any],
+              let id = userData["id"] as? String,
+              let name = userData["name"] as? String,
+              let isReady = userData["isReady"] as? Bool else {
+            return nil
+        }
+        
+        let isMuted = userData["isMuted"] as? Bool ?? false
         let user = User(id: id, name: name, isMuted: isMuted, isReady: isReady)
-        return .userJoined(user)
+        
+        return (user, isReady)
     }
     
-    private func parseUserLeft(from json: [String: Any]) -> GameEvent? {
-        guard let userId = json["userId"] as? String else {
-            return nil
-        }
-        return .userLeft(userId: userId)
-    }
-    
-    private func parseUserReadyStateChanged(from json: [String: Any]) -> GameEvent? {
-        guard let userId = json["userId"] as? String,
-              let isReady = json["isReady"] as? Bool else {
-            return nil
-        }
-        return .userReadyStateChanged(userId: userId, isReady: isReady)
-    }
-    
-    private func parseUserMuteStateChanged(from json: [String: Any]) -> GameEvent? {
+    private func parseUserMuteStateChanged(from json: [String: Any]) -> (String, Bool)? {
         guard let userId = json["userId"] as? String,
               let isMuted = json["isMuted"] as? Bool else {
             return nil
         }
-        return .userMuteStateChanged(userId: userId, isMuted: isMuted)
+        return (userId, isMuted)
     }
     
-    private func parseRolesAssigned(from json: [String: Any]) -> GameEvent? {
-        guard let usersData = json["users"] as? [[String: Any]],
+    private func parseRolesAssigned(from json: [String: Any]) -> ([String: Role], String)? {
+        guard let rolesData = json["roles"] as? [String: String],
               let swappedUserId = json["swappedUserId"] as? String else {
             return nil
         }
         
-        let users = usersData.compactMap { userData -> User? in
-            guard let id = userData["id"] as? String,
-                  let name = userData["name"] as? String,
-                  let roleString = userData["role"] as? String else {
-                return nil
-            }
-            
+        var userRoles: [String: Role] = [:]
+        for (userId, roleString) in rolesData {
             let role: Role = roleString == "werewolf" ? .werewolf : .villager
-            let isMuted = userData["isMuted"] as? Bool ?? false
-            let isReady = userData["isReady"] as? Bool ?? false
-            
-            return User(id: id, name: name, isMuted: isMuted, isReady: isReady, role: role)
+            userRoles[userId] = role
         }
         
-        return .rolesAssigned(users: users, swappedUserId: swappedUserId)
+        return (userRoles, swappedUserId)
     }
     
-    private func parseVideoCallCountdown(from json: [String: Any]) -> GameEvent? {
-        guard let timeRemaining = json["timeRemaining"] as? Int else {
-            return nil
-        }
-        return .videoCallCountdown(timeRemaining: timeRemaining)
-    }
-    
-    private func parseAnswerSubmitted(from json: [String: Any]) -> GameEvent? {
-        guard let userId = json["userId"] as? String,
-              let selectedUserId = json["selectedUserId"] as? String else {
-            return nil
-        }
-        return .answerSubmitted(userId: userId, selectedUserId: selectedUserId)
-    }
-    
-    private func parseAnswerRevealed(from json: [String: Any]) -> GameEvent? {
-        guard let answersData = json["answers"] as? [[String: Any]],
-              let swappedUserId = json["swappedUserId"] as? String else {
+
+    private func parseAnswerRevealed(from json: [String: Any]) -> [PlayerAnswer]? {
+        guard let answersData = json["answers"] as? [[String: Any]] else {
             return nil
         }
         
@@ -289,14 +300,11 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol {
             return PlayerAnswer(id: id, playerName: playerName, selectedUserId: selectedUserId, isCorrect: isCorrect)
         }
         
-        return .answerRevealed(answers: answers, swappedUserId: swappedUserId)
+        return answers
     }
     
-    private func parseError(from json: [String: Any]) -> GameEvent? {
-        guard let message = json["message"] as? String else {
-            return nil
-        }
-        return .error(message: message)
+    private func parseError(from json: [String: Any]) -> String? {
+        return json["message"] as? String
     }
 }
 

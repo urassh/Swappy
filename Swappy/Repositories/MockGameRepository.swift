@@ -11,33 +11,61 @@ import Combine
 /// 開発・テスト用のモックGameRepository実装
 /// 現在のGameViewModelのダミーロジックを移行
 class MockGameRepository: GameRepositoryProtocol {
-    
     // MARK: - Properties
     
-    private let eventSubject = PassthroughSubject<GameEvent, Never>()
-    var eventPublisher: AnyPublisher<GameEvent, Never> {
-        eventSubject.eraseToAnyPublisher()
-    }
-    
-    private var currentUserId: String = "1"
-    private var currentUserName: String = ""
+    // イベントハンドラ
+    private var onUserJoined: ((User) -> Void)?
+    private var onUserLeft: ((User) -> Void)?
+    private var onUserReadyStateChanged: ((User, Bool) -> Void)?
+    private var onUserMuteStateChanged: ((String, Bool) -> Void)?
+    private var onRolesAssigned: (([String: Role], String) -> Void)?
+    private var onAnswerRevealed: (([PlayerAnswer]) -> Void)?
+    private var onError: ((String) -> Void)?
+
     private var currentKeyword: String = ""
-    private var users: [User] = []
-    private var videoCallTimer: Timer?
+    private static var rooms: [String: [User]] = [:]  // keyword -> users
+    
+    // MARK: - Computed Properties
+    
+    private var users: [User] {
+        get { Self.rooms[currentKeyword] ?? [] }
+        set { Self.rooms[currentKeyword] = newValue }
+    }
     
     // MARK: - GameRepositoryProtocol
     
-    func joinRoom(keyword: String, userName: String) async throws {
+    func setEventHandlers(
+        onUserJoined: @escaping (User) -> Void,
+        onUserLeft: @escaping (User) -> Void,
+        onUserReadyStateChanged: @escaping (User, Bool) -> Void,
+        onUserMuteStateChanged: @escaping (String, Bool) -> Void,
+        onRolesAssigned: @escaping ([String: Role], String) -> Void,
+        onAnswerRevealed: @escaping ([PlayerAnswer]) -> Void,
+        onError: @escaping (String) -> Void
+    ) {
+        self.onUserJoined = onUserJoined
+        self.onUserLeft = onUserLeft
+        self.onUserReadyStateChanged = onUserReadyStateChanged
+        self.onUserMuteStateChanged = onUserMuteStateChanged
+        self.onRolesAssigned = onRolesAssigned
+        self.onAnswerRevealed = onAnswerRevealed
+        self.onError = onError
+    }
+    
+    func joinRoom(keyword: String, me: User) async throws {
         self.currentKeyword = keyword
-        self.currentUserName = userName
+        
+        // ルームが存在しない場合は初期化
+        if Self.rooms[keyword] == nil {
+            Self.rooms[keyword] = []
+        }
         
         // 自分を追加
-        let myUser = User(id: currentUserId, name: userName, isReady: false)
-        users.append(myUser)
-        eventSubject.send(.userJoined(myUser))
+        users.append(me)
+        onUserJoined?(me)
         
-        // シミュレーション: 1秒後に他のユーザーが参加
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+        // シミュレーション: 3秒後に他のユーザーが参加
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
             guard let self = self else { return }
             
             let mockUsers = [
@@ -48,24 +76,24 @@ class MockGameRepository: GameRepositoryProtocol {
             
             for user in mockUsers {
                 self.users.append(user)
-                self.eventSubject.send(.userJoined(user))
+                self.onUserJoined?(user)
             }
         }
     }
     
     func leaveRoom() async throws {
-        users.removeAll()
-        videoCallTimer?.invalidate()
-        videoCallTimer = nil
+        if !currentKeyword.isEmpty {
+            Self.rooms[currentKeyword] = nil
+        }
     }
     
-    func toggleReady() async throws {
+    func completeCallReady(me: User) async throws {
         // 自分の準備状態を切り替え
-        if let index = users.firstIndex(where: { $0.id == currentUserId }) {
+        if let index = users.firstIndex(where: { $0.id == me.id }) {
             users[index].isReady.toggle()
-            let isReady = users[index].isReady
+            let user = users[index]
             
-            eventSubject.send(.userReadyStateChanged(userId: currentUserId, isReady: isReady))
+            onUserReadyStateChanged?(user, user.isReady)
             
             // 全員が準備完了したら役職を割り当て
             if users.allSatisfy({ $0.isReady }) {
@@ -76,28 +104,60 @@ class MockGameRepository: GameRepositoryProtocol {
         }
     }
     
-    func toggleMute(isMuted: Bool) async throws {
-        if let index = users.firstIndex(where: { $0.id == currentUserId }) {
+    func toggleMute(me: User, isMuted: Bool) async throws {
+        if let index = users.firstIndex(where: { $0.id == me.id }) {
             users[index].isMuted = isMuted
-            eventSubject.send(.userMuteStateChanged(userId: currentUserId, isMuted: isMuted))
+            onUserMuteStateChanged?(me.id, isMuted)
         }
     }
     
-    func submitAnswer(userId: String) async throws {
-        // 回答を送信
-        eventSubject.send(.answerSubmitted(userId: currentUserId, selectedUserId: userId))
-        
-        // シミュレーション: 0.5秒後に結果を発表
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.revealAnswers(myAnswer: userId)
+    func submitAnswer(me: User, selectUserId: String) async throws {
+        // シミュレーション: 5秒後に結果を発表
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            guard let self = self else { return }
+            
+            // 人狼を取得
+            guard let werewolf = self.users.first(where: { $0.role == .werewolf }) else {
+                return
+            }
+            
+            // 全員の回答を生成
+            var allAnswers: [PlayerAnswer] = []
+            
+            for user in self.users {
+                if user.id == me.id {
+                    // 自分の回答
+                    let isCorrect = (selectUserId == werewolf.id)
+                    allAnswers.append(PlayerAnswer(
+                        id: user.id,
+                        playerName: user.name,
+                        selectedUserId: selectUserId,
+                        isCorrect: isCorrect
+                    ))
+                } else {
+                    // ダミーの回答（ランダム）
+                    let otherUsers = self.users.filter { $0.id != user.id }
+                    let randomAnswer = otherUsers.randomElement()?.id
+                    let isCorrect = (randomAnswer == werewolf.id)
+                    
+                    allAnswers.append(PlayerAnswer(
+                        id: user.id,
+                        playerName: user.name,
+                        selectedUserId: randomAnswer,
+                        isCorrect: isCorrect
+                    ))
+                }
+            }
+            
+            // 結果発表イベントを送信
+            self.onAnswerRevealed?(allAnswers)
         }
     }
     
     func resetGame() async throws {
-        users.removeAll()
-        videoCallTimer?.invalidate()
-        videoCallTimer = nil
-        eventSubject.send(.gameReset)
+        if !currentKeyword.isEmpty {
+            Self.rooms[currentKeyword] = nil
+        }
     }
     
     // MARK: - Private Methods
@@ -106,61 +166,16 @@ class MockGameRepository: GameRepositoryProtocol {
         // ランダムに1人を人狼に選ぶ
         let werewolfIndex = Int.random(in: 0..<users.count)
         
-        for (index, _) in users.enumerated() {
+        var userRoles: [String: Role] = [:]
+        for (index, user) in users.enumerated() {
             let role: Role = (index == werewolfIndex) ? .werewolf : .villager
             users[index].role = role
+            userRoles[user.id] = role
         }
         
         let swappedUserId = users[werewolfIndex].id
         
         // 役職割り当てイベントを送信
-        eventSubject.send(.rolesAssigned(users: users, swappedUserId: swappedUserId))
-    }
-    
-    func startVideoCall() async throws {
-        eventSubject.send(.videoCallStarted)
-    }
-    
-    func startAnswerPhase() async throws {
-        eventSubject.send(.answerPhaseStarted)
-    }
-    
-    private func revealAnswers(myAnswer: String) {
-        // 人狼のIDを取得
-        guard let werewolf = users.first(where: { $0.role == .werewolf }) else {
-            return
-        }
-        let swappedUserId = werewolf.id
-        
-        // 全員の回答を生成
-        var allAnswers: [PlayerAnswer] = []
-        
-        for user in users {
-            if user.id == currentUserId {
-                // 自分の回答
-                let isCorrect = (myAnswer == swappedUserId)
-                allAnswers.append(PlayerAnswer(
-                    id: user.id,
-                    playerName: user.name,
-                    selectedUserId: myAnswer,
-                    isCorrect: isCorrect
-                ))
-            } else {
-                // ダミーの回答（ランダム）
-                let otherUsers = users.filter { $0.id != user.id }
-                let randomAnswer = otherUsers.randomElement()?.id
-                let isCorrect = (randomAnswer == swappedUserId)
-                
-                allAnswers.append(PlayerAnswer(
-                    id: user.id,
-                    playerName: user.name,
-                    selectedUserId: randomAnswer,
-                    isCorrect: isCorrect
-                ))
-            }
-        }
-        
-        // 結果発表イベントを送信
-        eventSubject.send(.answerRevealed(answers: allAnswers, swappedUserId: swappedUserId))
+        onRolesAssigned?(userRoles, swappedUserId)
     }
 }

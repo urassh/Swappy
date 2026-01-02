@@ -14,14 +14,12 @@ struct RobbyView: View {
     init(
         usersPublisher: AnyPublisher<[User], Never>,
         myUserId: String,
-        onToggleReady: @escaping () -> Void,
         onMuteMic: @escaping () -> Void,
         onUnmuteMic: @escaping () -> Void
     ) {
         self.viewModel = RobbyViewModel(
             usersPublisher: usersPublisher,
             myUserId: myUserId,
-            onToggleReady: onToggleReady,
             onMuteMic: onMuteMic,
             onUnmuteMic: onUnmuteMic
         )
@@ -123,30 +121,6 @@ struct RobbyView: View {
                     }
                     .padding(.horizontal, 30)
                     
-                    // 準備完了ボタン
-                    Button(action: {
-                        viewModel.toggleReady()
-                    }) {
-                        Text(viewModel.myUser?.isReady == true ? "準備完了を取り消す" : "準備完了")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        viewModel.myUser?.isReady == true ? Color.orange : Color.green,
-                                        viewModel.myUser?.isReady == true ? Color.red : Color.blue
-                                    ]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(15)
-                            .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
-                    .padding(.horizontal, 30)
-                    
                     // 全員準備完了の表示
                     if viewModel.allUsersReady {
                         Text("全員集合！役職を配布します...")
@@ -174,7 +148,6 @@ struct RobbyView: View {
     return RobbyView(
         usersPublisher: usersPublisher,
         myUserId: "1",
-        onToggleReady: {},
         onMuteMic: {},
         onUnmuteMic: {}
     )
