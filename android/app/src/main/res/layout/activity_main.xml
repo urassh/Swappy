@@ -3,7 +3,9 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <ImageView
         android:id="@+id/start_background"
@@ -22,6 +24,8 @@
         android:id="@+id/start_content"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:paddingHorizontal="32dp"
@@ -33,22 +37,27 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <FrameLayout
-            android:layout_width="180dp"
-            android:layout_height="180dp"
+            android:layout_width="220dp"
+            android:layout_height="220dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp"
             android:background="@drawable/logo_glow"
-            android:padding="14dp">
+            android:padding="20dp">
 
-            <ImageView
-                android:id="@+id/start_logo"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@drawable/logo_circle"
-                android:contentDescription="@string/start_logo_desc"
-                android:padding="3dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/image_2" />
+                android:padding="3dp">
+
+                <ImageView
+                    android:id="@+id/start_logo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/start_logo_desc"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/image_2" />
+            </FrameLayout>
         </FrameLayout>
 
         <com.swappy.sample.StrokeTextView
@@ -57,12 +66,12 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="@string/start_title"
-            android:textColor="@color/white_10"
-            android:textFontWeight="500"
+            android:textColor="@color/white_40"
+            android:textFontWeight="600"
             android:fontFamily="monospace"
             android:textSize="32sp"
-            app:strokeColor="@color/white_60"
-            app:strokeWidth="1dp" />
+            app:strokeColor="@color/white_50"
+            app:strokeWidth="1px" />
 
         <TextView
             android:id="@+id/start_subtitle"
@@ -71,7 +80,7 @@
             android:layout_marginTop="4dp"
             android:text="@string/start_subtitle"
             android:textColor="@color/white_80"
-            android:textSize="12sp" />
+            android:textSize="13sp" />
 
         <TextView
             android:id="@+id/start_rules_title"
@@ -91,7 +100,7 @@
             android:gravity="center"
             android:text="@string/start_rules_body"
             android:textColor="@color/white_80"
-            android:textSize="11sp" />
+            android:textSize="13sp" />
 
         <EditText
             android:id="@+id/start_name_input"
@@ -103,45 +112,69 @@
             android:inputType="textPersonName"
             android:paddingBottom="4dp"
             android:textColor="@color/white"
-            android:textColorHint="@color/white_70"
-            android:textSize="12sp" />
+            android:textColorHint="@color/white_80"
+            android:textSize="15sp" />
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="2dp"
             android:layout_marginTop="6dp"
-            android:background="@color/white_40" />
+            android:background="@color/white_80" />
 
         <EditText
             android:id="@+id/start_room_code"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="56dp"
             android:layout_marginTop="18dp"
             android:background="@drawable/input_rounded"
+            android:gravity="center_vertical"
             android:hint="@string/start_room_code_hint"
+            android:includeFontPadding="false"
             android:inputType="text"
             android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp"
             android:textColor="@color/white"
-            android:textColorHint="@color/white_60"
-            android:textSize="12sp" />
+            android:textColorHint="@color/white_80"
+            android:textSize="15sp" />
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:background="@drawable/button_glow"
-            android:padding="10dp">
+            android:layout_height="80dp"
+            android:layout_marginTop="0dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:background="@drawable/join_glow_solid">
 
-            <Button
-                android:id="@+id/start_join_button"
+            <FrameLayout
+                android:id="@+id/start_join_container"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/button_primary"
-                android:text="@string/start_join_button"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:layout_height="56dp"
+                android:layout_gravity="center"
+                android:background="@drawable/join_button_body"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:id="@+id/start_join_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:letterSpacing="0.02"
+                    android:text="@string/start_join_button"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:id="@+id/join_glow"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_gravity="center"
+                    android:layout_marginStart="-28dp"
+                    android:layout_marginTop="0dp"
+                    android:layout_marginEnd="-28dp"
+                    android:layout_marginBottom="0dp"/>
+            </FrameLayout>
         </FrameLayout>
     </LinearLayout>
 

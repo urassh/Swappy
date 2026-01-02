@@ -2,20 +2,21 @@
     <item>
         <shape>
             <gradient
-                android:angle="0"
-                android:centerColor="@color/button_glow"
+                android:centerX="0.52"
+                android:centerY="0.52"
+                android:centerColor="@color/shadow_blue"
                 android:endColor="@android:color/transparent"
-                android:startColor="@color/button_glow"
+                android:startColor="@color/shadow_blue"
                 android:type="radial"
                 android:gradientRadius="120dp" />
-            <corners android:radius="24dp" />
+            <corners android:radius="22dp" />
         </shape>
     </item>
     <item
-        android:left="10dp"
-        android:top="10dp"
-        android:right="10dp"
-        android:bottom="10dp">
+        android:left="14dp"
+        android:top="14dp"
+        android:right="14dp"
+        android:bottom="14dp">
         <shape>
             <solid android:color="@android:color/transparent" />
             <corners android:radius="16dp" />

@@ -1,0 +1,65 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:left="-36dp"
+        android:right="-36dp"
+        android:top="-28dp"
+        android:bottom="-44dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="48dp" />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="140dp"
+                android:centerX="0.5"
+                android:centerY="0.7"
+                android:startColor="#6A4C6FFF"
+                android:centerColor="#264C6FFF"
+                android:endColor="#004C6FFF" />
+        </shape>
+    </item>
+
+    <item
+        android:left="-14dp"
+        android:right="-14dp"
+        android:top="-10dp"
+        android:bottom="-18dp">
+        <shape>
+            <corners android:radius="34dp" />
+            <gradient
+                android:type="radial"
+                android:gradientRadius="90dp"
+                android:centerX="0.5"
+                android:centerY="0.75"
+                android:startColor="#804C6FFF"
+                android:endColor="#004C6FFF" />
+        </shape>
+    </item>
+
+    <item
+        android:insetLeft="2dp"
+        android:insetRight="2dp"
+        android:insetTop="2dp"
+        android:insetBottom="2dp">
+        <layer-list>
+            <item>
+                <shape>
+                    <corners android:radius="26dp" />
+                    <gradient
+                        android:angle="0"
+                        android:endColor="#2A2578"
+                        android:startColor="#7C74F6" />
+                </shape>
+            </item>
+            <item
+                android:top="1dp"
+                android:bottom="24dp">
+                <shape>
+                    <corners android:radius="26dp" />
+                    <gradient
+                        android:angle="90"
+                        android:endColor="#00FFFFFF"
+                        android:startColor="#33FFFFFF" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</layer-list>

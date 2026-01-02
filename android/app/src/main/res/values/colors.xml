@@ -20,5 +20,5 @@
     <color name="button_start">#8386CA</color>
     <color name="button_mid">#5D62F0</color>
     <color name="button_end">#242658</color>
-    <color name="button_glow">#B33966FF</color>
+    <color name="shadow_blue">#803966FF</color>
 </resources>
