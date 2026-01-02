@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Swappy</string>
+    <string name="hello_message">Hello, Swappy Android!</string>
+</resources>
