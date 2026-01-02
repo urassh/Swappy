@@ -5,4 +5,20 @@
     <color name="teal_700">#018786</color>
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
+    <color name="white_80">#CCFFFFFF</color>
+    <color name="white_70">#B3FFFFFF</color>
+    <color name="white_60">#99FFFFFF</color>
+    <color name="white_40">#66FFFFFF</color>
+    <color name="white_30">#4DFFFFFF</color>
+    <color name="white_10">#1AFFFFFF</color>
+    <color name="white_50">#80FFFFFF</color>
+
+    <color name="glow_outer">#4D6C7BFF</color>
+    <color name="glow_inner">#8F839BFF</color>
+    <color name="logo_surface">#2C2F39</color>
+    <color name="input_surface">#4DFFFFFF</color>
+    <color name="button_start">#8386CA</color>
+    <color name="button_mid">#5D62F0</color>
+    <color name="button_end">#242658</color>
+    <color name="button_glow">#B33966FF</color>
 </resources>

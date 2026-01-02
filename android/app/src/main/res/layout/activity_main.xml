@@ -5,15 +5,144 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/hello_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/hello_message"
-        android:textSize="20sp"
+    <ImageView
+        android:id="@+id/start_background"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@null"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        android:src="@drawable/background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/start_content"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingHorizontal="32dp"
+        android:paddingTop="40dp"
+        android:paddingBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <FrameLayout
+            android:layout_width="180dp"
+            android:layout_height="180dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/logo_glow"
+            android:padding="14dp">
+
+            <ImageView
+                android:id="@+id/start_logo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/logo_circle"
+                android:contentDescription="@string/start_logo_desc"
+                android:padding="3dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/image_2" />
+        </FrameLayout>
+
+        <com.swappy.sample.StrokeTextView
+            android:id="@+id/start_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/start_title"
+            android:textColor="@color/white_10"
+            android:textFontWeight="500"
+            android:fontFamily="monospace"
+            android:textSize="32sp"
+            app:strokeColor="@color/white_60"
+            app:strokeWidth="1dp" />
+
+        <TextView
+            android:id="@+id/start_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/start_subtitle"
+            android:textColor="@color/white_80"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/start_rules_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/start_rules_title"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/start_rules_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="@string/start_rules_body"
+            android:textColor="@color/white_80"
+            android:textSize="11sp" />
+
+        <EditText
+            android:id="@+id/start_name_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:background="@null"
+            android:hint="@string/start_name_label"
+            android:inputType="textPersonName"
+            android:paddingBottom="4dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/white_70"
+            android:textSize="12sp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="6dp"
+            android:background="@color/white_40" />
+
+        <EditText
+            android:id="@+id/start_room_code"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/input_rounded"
+            android:hint="@string/start_room_code_hint"
+            android:inputType="text"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/white_60"
+            android:textSize="12sp" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/button_glow"
+            android:padding="10dp">
+
+            <Button
+                android:id="@+id/start_join_button"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/button_primary"
+                android:text="@string/start_join_button"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </FrameLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
