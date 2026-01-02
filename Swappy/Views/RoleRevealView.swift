@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct RoleRevealView: View {
-    @Bindable var viewModel: GameViewModel
+    @Bindable var viewModel: RoleRevealViewModel
     @State private var showRole = false
-    @State private var countdown = 5  // 5秒後に自動で次へ
     
     var body: some View {
         ZStack {
@@ -71,7 +70,7 @@ struct RoleRevealView: View {
                 
                 // カウントダウン表示
                 if showRole {
-                    Text("\(countdown)秒後にゲーム開始")
+                    Text("\(viewModel.countdown)秒後にゲーム開始")
                         .font(.system(size: 16))
                         .foregroundColor(.white)
                         .transition(.opacity)
@@ -82,7 +81,7 @@ struct RoleRevealView: View {
                 // スキップボタン
                 if showRole {
                     Button(action: {
-                        viewModel.startVideoCall()
+                        viewModel.skipToVideoCall()
                     }) {
                         Text("すぐに始める")
                             .font(.system(size: 16, weight: .semibold))
@@ -102,27 +101,13 @@ struct RoleRevealView: View {
             // 1秒後に役職を表示
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 showRole = true
-                startCountdown()
-            }
-        }
-    }
-    
-    // カウントダウン開始
-    private func startCountdown() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            if countdown > 0 {
-                countdown -= 1
-            } else {
-                timer.invalidate()
-                viewModel.startVideoCall()
             }
         }
     }
     
     // 役職に応じた色を返す
     private func getRoleColors() -> [Color] {
-        guard let currentUser = viewModel.users.first(where: { $0.id == "1" }),
-              let role = currentUser.role else {
+        guard let role = viewModel.role else {
             return [Color.gray, Color.gray.opacity(0.7)]
         }
         
@@ -136,8 +121,7 @@ struct RoleRevealView: View {
     
     // 役職アイコンを返す
     private func getRoleIcon() -> String {
-        guard let currentUser = viewModel.users.first(where: { $0.id == "1" }),
-              let role = currentUser.role else {
+        guard let role = viewModel.role else {
             return "questionmark"
         }
         
@@ -151,8 +135,7 @@ struct RoleRevealView: View {
     
     // 役職アイコンの背景色を返す
     private func getRoleIconBackgroundColor() -> Color {
-        guard let currentUser = viewModel.users.first(where: { $0.id == "1" }),
-              let role = currentUser.role else {
+        guard let role = viewModel.role else {
             return Color.gray
         }
         
@@ -166,8 +149,7 @@ struct RoleRevealView: View {
     
     // 役職名を返す
     private func getRoleText() -> String {
-        guard let currentUser = viewModel.users.first(where: { $0.id == "1" }),
-              let role = currentUser.role else {
+        guard let role = viewModel.role else {
             return "不明"
         }
         
@@ -181,8 +163,7 @@ struct RoleRevealView: View {
     
     // 役職のテキスト色を返す
     private func getRoleTextColor() -> Color {
-        guard let currentUser = viewModel.users.first(where: { $0.id == "1" }),
-              let role = currentUser.role else {
+        guard let role = viewModel.role else {
             return Color.gray
         }
         
@@ -196,8 +177,7 @@ struct RoleRevealView: View {
     
     // 役職の説明文を返す
     private func getRoleDescription() -> String {
-        guard let currentUser = viewModel.users.first(where: { $0.id == "1" }),
-              let role = currentUser.role else {
+        guard let role = viewModel.role else {
             return ""
         }
         
@@ -211,5 +191,10 @@ struct RoleRevealView: View {
 }
 
 #Preview {
-    RoleRevealView(viewModel: GameViewModel())
+    RoleRevealView(
+        viewModel: RoleRevealViewModel(
+            myRole: .werewolf,
+            onStartVideoCall: {}
+        )
+    )
 }

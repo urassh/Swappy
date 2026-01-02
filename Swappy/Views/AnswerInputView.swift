@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AnswerInputView: View {
-    @Bindable var viewModel: GameViewModel
+    @Bindable var viewModel: AnswerInputViewModel
     @State private var selectedUserId: String? = nil
     
     var body: some View {
@@ -49,7 +49,7 @@ struct AnswerInputView: View {
                 
                 // ユーザー選択肢
                 VStack(spacing: 15) {
-                    ForEach(viewModel.users.filter { $0.id != "1" }) { user in
+                    ForEach(viewModel.selectableUsers) { user in
                         Button(action: {
                             selectedUserId = user.id
                         }) {
@@ -101,7 +101,8 @@ struct AnswerInputView: View {
                 // 回答ボタン
                 Button(action: {
                     if let userId = selectedUserId {
-                        viewModel.submitAnswer(userId: userId)
+                        viewModel.selectedUserId = userId
+                        viewModel.submitAnswer()
                     }
                 }) {
                     Text("回答する")
@@ -134,15 +135,14 @@ struct AnswerInputView: View {
 }
 
 #Preview {
-    AnswerInputView(viewModel: {
-        let vm = GameViewModel()
-        vm.gameState = .answerInput
-        vm.users = [
+    AnswerInputView(viewModel: AnswerInputViewModel(
+        gameRepository: MockGameRepository(),
+        users: [
             User(id: "1", name: "あなた"),
             User(id: "2", name: "太郎"),
             User(id: "3", name: "花子"),
             User(id: "4", name: "次郎")
-        ]
-        return vm
-    }())
+        ],
+        myUserId: "1"
+    ))
 }

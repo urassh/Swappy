@@ -1,8 +1,8 @@
 //
-//  GameViewModel.swift
+//  GameCoordinator.swift
 //  Swappy
 //
-//  Created by 浦山秀斗 on 2025/12/30.
+//  Created by 浦山秀斗 on 2026/01/02.
 //
 
 import Foundation
@@ -10,27 +10,30 @@ import SwiftUI
 import AgoraRtcKit
 import Combine
 
+/// ゲーム全体のナビゲーションと共有データを管理するCoordinator
 @Observable
-class GameViewModel {
-    var gameState: ScreenState = .keywordInput
-    var keyword: String = ""
-    var userName: String = ""
+class GameCoordinator {
+    
+    // MARK: - Navigation State
+    
+    var currentScreen: ScreenState = .keywordInput
+    
+    // MARK: - Shared Data
+    
     var users: [User] = []
-    var isMicMuted: Bool = false
+    var swappedUserId: String? = nil
+    var allAnswers: [PlayerAnswer] = []
+    var myUserId: String = "1"  // 現在のユーザーID（将来的にはBackendから取得）
     
-    // Agora Manager
-    private var agoraManager: AgoraManager?
+    // MARK: - Dependencies
+    
+    let gameRepository: GameRepositoryProtocol
+    private(set) var agoraManager: AgoraManager?
+    
+    // MARK: - Private Properties
+    
     private let appId = "test-mode"
-    
-    // Game Repository
-    private var gameRepository: GameRepositoryProtocol
     private var cancellables = Set<AnyCancellable>()
-    
-    // ゲーム関連
-    var swappedUserId: String? = nil  // 入れ替わっているユーザーのID
-    var myAnswer: String? = nil       // 自分の回答
-    var allAnswers: [PlayerAnswer] = [] // 全員の回答結果
-    var videoCallTimeRemaining: Int = 10  // ビデオ通話の残り時間
     
     // MARK: - Initialization
     
@@ -70,14 +73,15 @@ class GameViewModel {
         case .videoCallStarted:
             handleVideoCallStarted()
             
-        case .videoCallCountdown(let timeRemaining):
-            handleVideoCallCountdown(timeRemaining)
+        case .videoCallCountdown(_):
+            // VideoCallViewModelで処理
+            break
             
         case .answerPhaseStarted:
             handleAnswerPhaseStarted()
             
         case .answerSubmitted(_, _):
-            // 他のユーザーの回答送信は特に処理しない
+            // 特に処理なし
             break
             
         case .answerRevealed(let answers, let swappedUserId):
@@ -118,44 +122,31 @@ class GameViewModel {
     private func handleRolesAssigned(users: [User], swappedUserId: String) {
         self.users = users
         self.swappedUserId = swappedUserId
-        self.gameState = .roleReveal
+        navigate(to: .roleReveal)
     }
     
     private func handleVideoCallStarted() {
-        self.gameState = .videoCall
-        self.videoCallTimeRemaining = 10
-    }
-    
-    private func handleVideoCallCountdown(_ timeRemaining: Int) {
-        self.videoCallTimeRemaining = timeRemaining
+        navigate(to: .videoCall)
     }
     
     private func handleAnswerPhaseStarted() {
-        self.gameState = .answerInput
+        navigate(to: .answerInput)
     }
     
     private func handleAnswerRevealed(answers: [PlayerAnswer], swappedUserId: String) {
         self.allAnswers = answers
         self.swappedUserId = swappedUserId
-        self.gameState = .answerReveal
-        
-        // 自分の回答を更新
-        if let myAnswerData = answers.first(where: { $0.id == "1" }) {
-            self.myAnswer = myAnswerData.selectedUserId
-        }
+        navigate(to: .answerReveal)
     }
     
     private func handleGameReset() {
         cleanupAgoraManager()
         
-        gameState = .keywordInput
-        keyword = ""
-        userName = ""
         users = []
         swappedUserId = nil
-        myAnswer = nil
         allAnswers = []
-        videoCallTimeRemaining = 10
+        
+        navigate(to: .keywordInput)
     }
     
     private func handleError(_ message: String) {
@@ -163,22 +154,28 @@ class GameViewModel {
         // TODO: ユーザーにエラーを表示
     }
     
+    // MARK: - Navigation
+    
+    func navigate(to screen: ScreenState) {
+        currentScreen = screen
+    }
+    
     // MARK: - Public Methods
     
-    // 合言葉を入力してロビーへ
-    func enterRoom() {
-        gameState = .robby
+    /// ルームに参加
+    func enterRoom(keyword: String, userName: String) {
+        navigate(to: .robby)
         
         // Agora Managerをセットアップ
         setupAgoraManager()
         
-        // チャンネルに参加（keywordをchannelIdとして使用）
+        // Agoraチャンネルに参加
         Task {
             do {
                 try await agoraManager?.joinChannel(keyword, uid: 0, role: "publisher")
                 print("🎤 Joined voice channel: \(keyword)")
             } catch {
-                print("❌ Failed to join channel: \(error)")
+                print("❌ Failed to join Agora channel: \(error)")
             }
         }
         
@@ -192,39 +189,7 @@ class GameViewModel {
         }
     }
     
-    // 準備完了を切り替え
-    func toggleReady() {
-        Task {
-            do {
-                try await gameRepository.toggleReady()
-            } catch {
-                print("❌ Failed to toggle ready: \(error)")
-            }
-        }
-    }
-    
-    var allUsersReady: Bool {
-        !users.isEmpty && users.allSatisfy { $0.isReady }
-    }
-    
-    // ビデオ通話開始
-    func startVideoCall() {
-        gameState = .videoCall
-        videoCallTimeRemaining = 10
-    }
-    
-    // 回答を送信
-    func submitAnswer(userId: String) {
-        Task {
-            do {
-                try await gameRepository.submitAnswer(userId: userId)
-            } catch {
-                print("❌ Failed to submit answer: \(error)")
-            }
-        }
-    }
-    
-    // ゲームをリセット
+    /// ゲームをリセット
     func resetGame() {
         Task {
             do {
@@ -235,64 +200,61 @@ class GameViewModel {
         }
     }
     
-    func toggleMic() {
-        if isMicMuted {
-            agoraManager?.audio?.unmute()
-        } else {
-            agoraManager?.audio?.mute()
-        }
-        isMicMuted.toggle()
-        
-        Task {
-            do {
-                try await gameRepository.toggleMute(isMuted: isMicMuted)
-            } catch {
-                print("❌ Failed to toggle mute: \(error)")
-            }
-        }
-    }
+    // MARK: - Agora Management
     
-    // Agora Managerをセットアップ
-    func setupAgoraManager() {
+    private func setupAgoraManager() {
         let tokenRepository = AgoraTestTokenRepository()
         
         let builder = AgoraManagerBuilder(appId: appId, tokenRepository: tokenRepository)
         agoraManager = builder
             .withAudio(delegate: nil)
-            .withChannelDelegate(self)
+            .withChannelDelegate(AgoraCoordinatorDelegate(coordinator: self))
             .build()
     }
     
-    // Agora Managerのクリーンアップ
-    func cleanupAgoraManager() {
+    private func cleanupAgoraManager() {
         agoraManager?.leaveChannel()
         agoraManager = nil
     }
+    
+    // MARK: - Computed Properties
+    
+    var myUser: User? {
+        users.first(where: { $0.id == myUserId })
+    }
+    
+    var myRole: Role? {
+        myUser?.role
+    }
 }
 
-// MARK: - ChannelEventDelegate
+// MARK: - Agora Delegate Adapter
 
-extension GameViewModel: ChannelEventDelegate {
+/// AgoraのイベントをCoordinatorに橋渡しするアダプター
+private class AgoraCoordinatorDelegate: ChannelEventDelegate {
+    weak var coordinator: GameCoordinator?
+    
+    init(coordinator: GameCoordinator) {
+        self.coordinator = coordinator
+    }
+    
     func didJoinChannel(uid: UInt) {
-        print("✅ Successfully joined channel with uid: \(uid)")
+        print("✅ Successfully joined Agora channel with uid: \(uid)")
     }
     
     func didUserJoin(uid: UInt) {
-        print("👤 User joined: \(uid)")
-        // Note: 実際の実装では、ユーザー情報を取得してusers配列に追加する
+        print("👤 User joined Agora: \(uid)")
     }
     
     func didUserLeave(uid: UInt) {
-        print("👋 User left: \(uid)")
-        // Note: 実際の実装では、users配列から該当ユーザーを削除する
+        print("👋 User left Agora: \(uid)")
     }
     
     func didLeaveChannel() {
-        print("📤 Left channel")
+        print("📤 Left Agora channel")
     }
     
     func didOccurError(code: AgoraErrorCode) {
-        print("❌ Agora error occurred: \(code.rawValue)")
-        // Note: 必要に応じてエラーをユーザーに通知
+        print("❌ Agora error: \(code.rawValue)")
     }
 }

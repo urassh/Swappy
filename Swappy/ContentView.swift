@@ -8,31 +8,93 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var viewModel = GameViewModel()
+    @State private var coordinator = GameCoordinator(gameRepository: MockGameRepository())
+    @State private var videoCallViewModel: VideoCallViewModel?
     
     var body: some View {
         ZStack {
-            switch viewModel.gameState {
+            switch coordinator.currentScreen {
             case .keywordInput:
-                KeywordView(viewModel: viewModel)
-                
-            case .waitingRoom:
-                RoomView(viewModel: viewModel)
+                KeywordInputView(
+                    onEnterRoom: { keyword, userName in
+                        coordinator.enterRoom(keyword: keyword, userName: userName)
+                    }
+                )
+
+            case .robby:
+                RobbyView(
+                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
+                    myUserId: coordinator.myUserId,
+                    onToggleReady: {
+                        Task {
+                            try? await coordinator.gameRepository.toggleReady()
+                        }
+                    },
+                    onMuteMic: {
+                        coordinator.agoraManager?.audio?.mute()
+                        Task {
+                            try? await coordinator.gameRepository.toggleMute(isMuted: true)
+                        }
+                    },
+                    onUnmuteMic: {
+                        coordinator.agoraManager?.audio?.unmute()
+                        Task {
+                            try? await coordinator.gameRepository.toggleMute(isMuted: false)
+                        }
+                    }
+                )
                 
             case .roleReveal:
-                RoleRevealView(viewModel: viewModel)
+                RoleRevealView(
+                    viewModel: RoleRevealViewModel(
+                        myRole: coordinator.myRole,
+                        onStartVideoCall: {
+                            // MockRepositoryが自動的にvideoCallStartedイベントを送信
+                        }
+                    )
+                )
                 
             case .videoCall:
-                VideoCallView(viewModel: viewModel)
+                if videoCallViewModel == nil {
+                    Color.clear.onAppear {
+                        videoCallViewModel = VideoCallViewModel(
+                            gameRepository: coordinator.gameRepository,
+                            users: coordinator.users,
+                            swappedUserId: coordinator.swappedUserId
+                        )
+                    }
+                }
+                if let vm = videoCallViewModel {
+                    VideoCallView(viewModel: vm)
+                        .onChange(of: coordinator.users) { _, newUsers in
+                            vm.updateUsers(newUsers)
+                        }
+                }
                 
             case .answerInput:
-                AnswerInputView(viewModel: viewModel)
+                AnswerInputView(
+                    viewModel: AnswerInputViewModel(
+                        gameRepository: coordinator.gameRepository,
+                        users: coordinator.users,
+                        myUserId: coordinator.myUserId
+                    )
+                )
                 
             case .answerReveal:
-                AnswerView(viewModel: viewModel)
+                AnswerView(
+                    viewModel: AnswerRevealViewModel(
+                        allAnswers: coordinator.allAnswers,
+                        swappedUserId: coordinator.swappedUserId ?? "",
+                        users: coordinator.users,
+                        myUserId: coordinator.myUserId,
+                        onRestart: {
+                            coordinator.resetGame()
+                        }
+                    )
+                )
             }
         }
-        .animation(.easeInOut, value: viewModel.gameState)
+        .animation(.easeInOut, value: coordinator.currentScreen)
     }
 }
 

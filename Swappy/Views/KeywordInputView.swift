@@ -7,8 +7,12 @@
 
 import SwiftUI
 
-struct KeywordView: View {
-    @Bindable var viewModel: GameViewModel
+struct KeywordInputView: View {
+    @State private var viewModel: KeywordInputViewModel
+    
+    init(onEnterRoom: @escaping (String, String) -> Void) {
+        self.viewModel = KeywordInputViewModel(onEnterRoom: onEnterRoom)
+    }
     
     var body: some View {
         ZStack {
@@ -114,8 +118,8 @@ struct KeywordView: View {
                             .cornerRadius(15)
                             .shadow(color: Color.purple.opacity(0.5), radius: 10, x: 0, y: 5)
                     }
-                    .disabled(viewModel.keyword.isEmpty || viewModel.userName.isEmpty)
-                    .opacity(viewModel.keyword.isEmpty || viewModel.userName.isEmpty ? 0.6 : 1.0)
+                    .disabled(!viewModel.canEnterRoom)
+                    .opacity(viewModel.canEnterRoom ? 1.0 : 0.6)
                 }
                 .padding(.horizontal, 30)
                 
@@ -141,5 +145,7 @@ extension View {
 
 
 #Preview {
-    KeywordView(viewModel: GameViewModel())
+    KeywordInputView(
+        onEnterRoom: { _, _ in }
+    )
 }

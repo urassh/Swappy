@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct AnswerView: View {
-    @Bindable var viewModel: GameViewModel
+    @Bindable var viewModel: AnswerRevealViewModel
     
     var correctUser: User? {
-        viewModel.users.first(where: { $0.id == viewModel.swappedUserId })
+        viewModel.correctUser
     }
     
     var myResult: PlayerAnswer? {
-        viewModel.allAnswers.first(where: { $0.id == "1" })
+        viewModel.myResult
     }
     
     var body: some View {
@@ -90,7 +90,7 @@ struct AnswerView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 30)
                         
-                        ForEach(viewModel.allAnswers) { answer in
+                        ForEach(viewModel.answers) { answer in
                             HStack(spacing: 15) {
                                 // プレイヤー名
                                 HStack {
@@ -144,7 +144,7 @@ struct AnswerView: View {
                     
                     // もう一度遊ぶボタン
                     Button(action: {
-                        viewModel.resetGame()
+                        viewModel.restart()
                     }) {
                         Text("もう一度遊ぶ")
                             .font(.system(size: 18, weight: .semibold))
@@ -171,23 +171,23 @@ struct AnswerView: View {
 }
 
 #Preview {
-    AnswerView(viewModel: {
-        let vm = GameViewModel()
-        vm.gameState = .answerReveal
-        vm.users = [
-            User(id: "1", name: "あなた"),
-            User(id: "2", name: "太郎"),
-            User(id: "3", name: "花子"),
-            User(id: "4", name: "次郎")
-        ]
-        vm.swappedUserId = "2"
-        vm.myAnswer = "2"
-        vm.allAnswers = [
+    let users = [
+        User(id: "1", name: "あなた"),
+        User(id: "2", name: "太郎"),
+        User(id: "3", name: "花子"),
+        User(id: "4", name: "次郎")
+    ]
+    
+    return AnswerView(viewModel: AnswerRevealViewModel(
+        allAnswers: [
             PlayerAnswer(id: "1", playerName: "あなた", selectedUserId: "2", isCorrect: true),
             PlayerAnswer(id: "2", playerName: "太郎", selectedUserId: "3", isCorrect: false),
             PlayerAnswer(id: "3", playerName: "花子", selectedUserId: "2", isCorrect: true),
             PlayerAnswer(id: "4", playerName: "次郎", selectedUserId: "4", isCorrect: false)
-        ]
-        return vm
-    }())
+        ],
+        swappedUserId: "2",
+        users: users,
+        myUserId: "1",
+        onRestart: {}
+    ))
 }

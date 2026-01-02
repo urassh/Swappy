@@ -182,7 +182,7 @@ struct CallRoomVideoTileView: View {
 #Preview {
     CallRoomView(viewModel: {
         let vm = GameViewModel()
-        vm.gameState = .waitingRoom
+        vm.gameState = .robby
         vm.keyword = "AAA"
         vm.users = [
             User(id: "1", name: "あなた"),

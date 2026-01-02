@@ -6,32 +6,25 @@
 //
 
 import SwiftUI
+import Combine
 
 struct RobbyView: View {
-    let users: [User]
-    let myUserId: String
-    let agoraManager: AgoraManager?
-    let onToggleReady: () -> Void
-    let onToggleMic: (Bool) -> Void
+    @State private var viewModel: RobbyViewModel
     
-    @State private var isMicMuted: Bool = false
-    
-    private var myUser: User? {
-        users.first(where: { $0.id == myUserId })
-    }
-    
-    private var allUsersReady: Bool {
-        !users.isEmpty && users.allSatisfy { $0.isReady }
-    }
-    
-    private func toggleMic() {
-        if isMicMuted {
-            agoraManager?.audio?.unmute()
-        } else {
-            agoraManager?.audio?.mute()
-        }
-        isMicMuted.toggle()
-        onToggleMic(isMicMuted)
+    init(
+        usersPublisher: AnyPublisher<[User], Never>,
+        myUserId: String,
+        onToggleReady: @escaping () -> Void,
+        onMuteMic: @escaping () -> Void,
+        onUnmuteMic: @escaping () -> Void
+    ) {
+        self.viewModel = RobbyViewModel(
+            usersPublisher: usersPublisher,
+            myUserId: myUserId,
+            onToggleReady: onToggleReady,
+            onMuteMic: onMuteMic,
+            onUnmuteMic: onUnmuteMic
+        )
     }
     
     var body: some View {
@@ -54,7 +47,7 @@ struct RobbyView: View {
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                     
-                    Text("村: \(users.first?.name ?? "Unknown")")
+                    Text("村: \(viewModel.users.first?.name ?? "Unknown")")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
                 }
@@ -63,7 +56,7 @@ struct RobbyView: View {
                 // 参加者リスト
                 ScrollView {
                     VStack(spacing: 15) {
-                        ForEach(users) { user in
+                        ForEach(viewModel.users) { user in
                             HStack(spacing: 15) {
                                 // アバター
                                 Circle()
@@ -114,27 +107,27 @@ struct RobbyView: View {
                 VStack(spacing: 20) {
                     // マイクボタン
                     Button(action: {
-                        toggleMic()
+                        viewModel.toggleMic()
                     }) {
                         HStack {
-                            Image(systemName: isMicMuted ? "mic.slash.fill" : "mic.fill")
+                            Image(systemName: viewModel.isMicMuted ? "mic.slash.fill" : "mic.fill")
                                 .font(.system(size: 20))
-                            Text(isMicMuted ? "マイクオフ" : "マイクオン")
+                            Text(viewModel.isMicMuted ? "マイクオフ" : "マイクオン")
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(isMicMuted ? Color.red.opacity(0.7) : Color.white.opacity(0.2))
+                        .background(viewModel.isMicMuted ? Color.red.opacity(0.7) : Color.white.opacity(0.2))
                         .cornerRadius(15)
                     }
                     .padding(.horizontal, 30)
                     
                     // 準備完了ボタン
                     Button(action: {
-                        onToggleReady()
+                        viewModel.toggleReady()
                     }) {
-                        Text(myUser?.isReady == true ? "準備完了を取り消す" : "準備完了")
+                        Text(viewModel.myUser?.isReady == true ? "準備完了を取り消す" : "準備完了")
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -142,8 +135,8 @@ struct RobbyView: View {
                             .background(
                                 LinearGradient(
                                     gradient: Gradient(colors: [
-                                        myUser?.isReady == true ? Color.orange : Color.green,
-                                        myUser?.isReady == true ? Color.red : Color.blue
+                                        viewModel.myUser?.isReady == true ? Color.orange : Color.green,
+                                        viewModel.myUser?.isReady == true ? Color.red : Color.blue
                                     ]),
                                     startPoint: .leading,
                                     endPoint: .trailing
@@ -155,7 +148,7 @@ struct RobbyView: View {
                     .padding(.horizontal, 30)
                     
                     // 全員準備完了の表示
-                    if allUsersReady {
+                    if viewModel.allUsersReady {
                         Text("全員集合！役職を配布します...")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white)
@@ -171,20 +164,18 @@ struct RobbyView: View {
 }
 
 #Preview {
-    RobbyView(
-        users: [
-            User(id: "1", name: "あなた", isReady: true),
-            User(id: "2", name: "太郎", isReady: false),
-            User(id: "3", name: "花子", isReady: true)
-        ],
+    let users = [
+        User(id: "1", name: "あなた", isReady: true),
+        User(id: "2", name: "太郎", isReady: false),
+        User(id: "3", name: "花子", isReady: true)
+    ]
+    let usersPublisher = Just(users).eraseToAnyPublisher()
+    
+    return RobbyView(
+        usersPublisher: usersPublisher,
         myUserId: "1",
-        agoraManager: nil,
         onToggleReady: {},
-        onToggleMic: { _ in }
-    )
-}
-            myUserId: "1"
-        ),
-        coordinator: coordinator
+        onMuteMic: {},
+        onUnmuteMic: {}
     )
 }

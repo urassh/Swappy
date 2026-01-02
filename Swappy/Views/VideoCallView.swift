@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct VideoCallView: View {
-    @Bindable var viewModel: GameViewModel
+    @Bindable var viewModel: VideoCallViewModel
     
     var body: some View {
         ZStack {
@@ -26,16 +26,16 @@ struct VideoCallView: View {
                             .frame(width: 80, height: 80)
                         
                         Circle()
-                            .trim(from: 0, to: CGFloat(viewModel.videoCallTimeRemaining) / 10.0)
+                            .trim(from: 0, to: CGFloat(viewModel.timeRemaining) / 10.0)
                             .stroke(
                                 Color.red,
                                 style: StrokeStyle(lineWidth: 4, lineCap: .round)
                             )
                             .frame(width: 80, height: 80)
                             .rotationEffect(.degrees(-90))
-                            .animation(.linear(duration: 1), value: viewModel.videoCallTimeRemaining)
+                            .animation(.linear(duration: 1), value: viewModel.timeRemaining)
                         
-                        Text("\(viewModel.videoCallTimeRemaining)")
+                        Text("\(viewModel.timeRemaining)")
                             .font(.system(size: 32, weight: .bold))
                             .foregroundColor(.white)
                     }
@@ -135,17 +135,14 @@ struct VideoTileView: View {
 }
 
 #Preview {
-    VideoCallView(viewModel: {
-        let vm = GameViewModel()
-        vm.gameState = .videoCall
-        vm.videoCallTimeRemaining = 7
-        vm.users = [
+    VideoCallView(viewModel: VideoCallViewModel(
+        gameRepository: MockGameRepository(),
+        users: [
             User(id: "1", name: "あなた"),
             User(id: "2", name: "太郎"),
             User(id: "3", name: "花子"),
             User(id: "4", name: "次郎")
-        ]
-        vm.swappedUserId = "2"
-        return vm
-    }())
+        ],
+        swappedUserId: "2"
+    ))
 }
