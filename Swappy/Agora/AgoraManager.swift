@@ -103,7 +103,7 @@ class AgoraManagerBuilder {
     }
 }
 
-// MARK: - Master Coordinator (Internal)
+// MARK: - Master Coordinator
 
 /// 全てのAgoraRtcEngineDelegateイベントを受け取り、各Componentに振り分けるCoordinator
 class MasterCoordinator: NSObject, AgoraRtcEngineDelegate {
