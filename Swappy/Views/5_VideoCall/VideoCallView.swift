@@ -6,9 +6,20 @@
 //
 
 import SwiftUI
+import Combine
 
 struct VideoCallView: View {
-    @Bindable var viewModel: GameViewModel
+    @State private var viewModel: VideoCallViewModel
+    
+    init(
+        usersPublisher: AnyPublisher<[User], Never>,
+        onTimeUp: @escaping () -> Void
+    ) {
+        self.viewModel = VideoCallViewModel(
+            usersPublisher: usersPublisher,
+            onTimeUp: onTimeUp
+        )
+    }
     
     var body: some View {
         ZStack {
@@ -26,16 +37,16 @@ struct VideoCallView: View {
                             .frame(width: 80, height: 80)
                         
                         Circle()
-                            .trim(from: 0, to: CGFloat(viewModel.videoCallTimeRemaining) / 10.0)
+                            .trim(from: 0, to: CGFloat(viewModel.timeRemaining) / 10.0)
                             .stroke(
                                 Color.red,
                                 style: StrokeStyle(lineWidth: 4, lineCap: .round)
                             )
                             .frame(width: 80, height: 80)
                             .rotationEffect(.degrees(-90))
-                            .animation(.linear(duration: 1), value: viewModel.videoCallTimeRemaining)
+                            .animation(.linear(duration: 1), value: viewModel.timeRemaining)
                         
-                        Text("\(viewModel.videoCallTimeRemaining)")
+                        Text("\(viewModel.timeRemaining)")
                             .font(.system(size: 32, weight: .bold))
                             .foregroundColor(.white)
                     }
@@ -57,7 +68,7 @@ struct VideoCallView: View {
                                     if index < viewModel.users.count {
                                         VideoTileView(
                                             user: viewModel.users[index],
-                                            isSwapped: viewModel.users[index].id == viewModel.swappedUserId
+                                            isSwapped: viewModel.users[index].isWolf
                                         )
                                     }
                                 }
@@ -66,9 +77,8 @@ struct VideoCallView: View {
                     }
                 }
                 .padding(.vertical, 20)
-                
-                // ヒントテキスト
-                Text("誰と入れ替わっているか覚えておこう！")
+
+                Text("誰が人狼(顔が変わった人)か見極めよう！")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
                     .padding()
@@ -135,17 +145,14 @@ struct VideoTileView: View {
 }
 
 #Preview {
-    VideoCallView(viewModel: {
-        let vm = GameViewModel()
-        vm.gameState = .videoCall
-        vm.videoCallTimeRemaining = 7
-        vm.users = [
-            User(id: "1", name: "あなた"),
-            User(id: "2", name: "太郎"),
-            User(id: "3", name: "花子"),
-            User(id: "4", name: "次郎")
-        ]
-        vm.swappedUserId = "2"
-        return vm
-    }())
+    let users = [
+        User(name: "あなた"),
+        User(name: "太郎"),
+        User(name: "花子"),
+        User(name: "次郎")
+    ]
+    let usersPublisher = Just(users).eraseToAnyPublisher()
+    
+    VideoCallView(
+        usersPublisher: usersPublisher, onTimeUp: {})
 }

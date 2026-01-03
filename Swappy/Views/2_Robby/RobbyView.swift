@@ -1,14 +1,31 @@
 //
-//  RoomView.swift
+//  RobbyView.swift
 //  Swappy
 //
 //  Created by 浦山秀斗 on 2025/12/30.
 //
 
 import SwiftUI
+import Combine
 
-struct RoomView: View {
-    @Bindable var viewModel: GameViewModel
+struct RobbyView: View {
+    @State private var viewModel: RobbyViewModel
+    
+    init(
+        usersPublisher: AnyPublisher<[User], Never>,
+        me: User,
+        onMuteMic: @escaping () -> Void,
+        onUnmuteMic: @escaping () -> Void,
+        onStartGame: @escaping () -> Void
+    ) {
+        self.viewModel = RobbyViewModel(
+            usersPublisher: usersPublisher,
+            me: me,
+            onMuteMic: onMuteMic,
+            onUnmuteMic: onUnmuteMic,
+            onStartGame: onStartGame
+        )
+    }
     
     var body: some View {
         ZStack {
@@ -26,11 +43,11 @@ struct RoomView: View {
             VStack(spacing: 30) {
                 // ヘッダー
                 VStack(spacing: 10) {
-                    Text("待機ロビー")
+                    Text("村の集会所")
                         .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                     
-                    Text("ルーム: \(viewModel.keyword)")
+                    Text("村: \(viewModel.users.first?.name ?? "Unknown")")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.9))
                 }
@@ -105,40 +122,35 @@ struct RoomView: View {
                         .cornerRadius(15)
                     }
                     .padding(.horizontal, 30)
-                    
-                    // 準備完了ボタン
-                    Button(action: {
-                        viewModel.toggleReady()
-                    }) {
-                        Text(viewModel.users.first?.isReady == true ? "準備完了を取り消す" : "準備完了")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
+
+                    // ゲーム開始できない理由の表示
+                    if let reason = viewModel.startGameDisabledReason {
+                        Text(reason)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.8))
                             .padding()
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        viewModel.users.first?.isReady == true ? Color.orange : Color.green,
-                                        viewModel.users.first?.isReady == true ? Color.red : Color.blue
-                                    ]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(15)
-                            .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
-                    .padding(.horizontal, 30)
-                    
-                    // 全員準備完了の表示
-                    if viewModel.allUsersReady {
-                        Text("まもなくゲーム開始...")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.white.opacity(0.2))
+                            .background(Color.orange.opacity(0.3))
                             .cornerRadius(10)
                     }
+                    
+                    // ゲーム開始ボタン
+                    Button(action: {
+                        viewModel.startGame()
+                    }) {
+                        HStack {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 20))
+                            Text("ゲーム開始")
+                                .font(.system(size: 18, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(viewModel.canStartGame ? Color.green.opacity(0.8) : Color.gray.opacity(0.5))
+                        .cornerRadius(15)
+                    }
+                    .disabled(!viewModel.canStartGame)
+                    .padding(.horizontal, 30)
                 }
                 .padding(.bottom, 40)
             }
@@ -147,15 +159,19 @@ struct RoomView: View {
 }
 
 #Preview {
-    RoomView(viewModel: {
-        let vm = GameViewModel()
-        vm.gameState = .waitingRoom
-        vm.keyword = "TEST123"
-        vm.users = [
-            User(id: "1", name: "あなた", isReady: true),
-            User(id: "2", name: "太郎", isReady: false),
-            User(id: "3", name: "花子", isReady: true)
-        ]
-        return vm
-    }())
+    let me = User(name: "あなた")
+    let users = [
+        me,
+        User(name: "太郎", isReady: false),
+        User(name: "花子", isReady: true)
+    ]
+    let usersPublisher = Just(users).eraseToAnyPublisher()
+    
+    RobbyView(
+        usersPublisher: usersPublisher,
+        me: me,
+        onMuteMic: {},
+        onUnmuteMic: {},
+        onStartGame: {}
+    )
 }

@@ -7,8 +7,12 @@
 
 import SwiftUI
 
-struct KeywordView: View {
-    @Bindable var viewModel: GameViewModel
+struct KeywordInputView: View {
+    @State private var viewModel: KeywordInputViewModel
+    
+    init(onEnterRoom: @escaping (String, String) -> Void) {
+        self.viewModel = KeywordInputViewModel(onEnterRoom: onEnterRoom)
+    }
     
     var body: some View {
         ZStack {
@@ -38,11 +42,11 @@ struct KeywordView: View {
                             .foregroundColor(.white)
                     }
                     
-                    Text("Swappy")
+                    Text("Swappy人狼")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(.white)
                     
-                    Text("顔入れ替わりゲーム")
+                    Text("Face Swap人狼ゲーム")
                         .font(.system(size: 18))
                         .foregroundColor(.white.opacity(0.9))
                 }
@@ -53,7 +57,7 @@ struct KeywordView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
                     
-                    Text("10秒間のビデオ通話で、誰と顔が入れ替わっているか当てよう！")
+                    Text("10秒間のビデオ通話で、1人だけ顔が入れ替わります。\n人狼(顔が変わった人)を見つけ出そう！")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.8))
                         .multilineTextAlignment(.center)
@@ -114,8 +118,8 @@ struct KeywordView: View {
                             .cornerRadius(15)
                             .shadow(color: Color.purple.opacity(0.5), radius: 10, x: 0, y: 5)
                     }
-                    .disabled(viewModel.keyword.isEmpty || viewModel.userName.isEmpty)
-                    .opacity(viewModel.keyword.isEmpty || viewModel.userName.isEmpty ? 0.6 : 1.0)
+                    .disabled(!viewModel.canEnterRoom)
+                    .opacity(viewModel.canEnterRoom ? 1.0 : 0.6)
                 }
                 .padding(.horizontal, 30)
                 
@@ -125,6 +129,23 @@ struct KeywordView: View {
     }
 }
 
+// TextField placeholder extension
+extension View {
+    func placeholder<Content: View>(
+        when shouldShow: Bool,
+        alignment: Alignment = .leading,
+        @ViewBuilder placeholder: () -> Content) -> some View {
+        
+        ZStack(alignment: alignment) {
+            placeholder().opacity(shouldShow ? 1 : 0)
+            self
+        }
+    }
+}
+
+
 #Preview {
-    KeywordView(viewModel: GameViewModel())
+    KeywordInputView(
+        onEnterRoom: { _, _ in }
+    )
 }

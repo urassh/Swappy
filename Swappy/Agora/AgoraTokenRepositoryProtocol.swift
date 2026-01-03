@@ -14,17 +14,17 @@ protocol AgoraTokenRepositoryProtocol {
         role: String,
         tokenExpirationInSeconds: Int?,
         privilegeExpirationInSeconds: Int?
-    ) async throws -> String
+    ) async throws -> String?
 }
 
-class DummyToken : AgoraTokenRepositoryProtocol {
+class AgoraTestTokenRepository : AgoraTokenRepositoryProtocol {
     func getToken(
         channelName: String,
         uid: UInt,
         role: String,
         tokenExpirationInSeconds: Int? = nil,
         privilegeExpirationInSeconds: Int? = nil
-    ) async throws -> String {
-        "dummyToken"
+    ) async throws -> String? {
+        nil
     }
 }
