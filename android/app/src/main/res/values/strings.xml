@@ -9,4 +9,13 @@
     <string name="start_name_label">あなたの名前を入力</string>
     <string name="start_room_code_hint">合言葉を入力</string>
     <string name="start_join_button">ルームに参加</string>
+    <string name="waiting_title">待機場</string>
+    <string name="waiting_room_name">村の集会所</string>
+    <string name="waiting_room_subtitle">村: Hello</string>
+    <string name="waiting_member_you_name">勇者（あなた）</string>
+    <string name="waiting_member_aa_name">村人A</string>
+    <string name="waiting_member_mage_name">魔法使い</string>
+    <string name="waiting_member_ranger_name">レンジャー</string>
+    <string name="waiting_status_ready">準備完了</string>
+    <string name="waiting_status_wait">準備中…</string>
 </resources>
