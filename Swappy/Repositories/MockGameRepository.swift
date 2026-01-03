@@ -18,10 +18,9 @@ class MockGameRepository: GameRepositoryProtocol {
     private var onUserLeft: ((User) -> Void)?
     private var onUserReadyStateChanged: ((User, Bool) -> Void)?
     private var onUserMuteStateChanged: ((User, Bool) -> Void)?
-    private var onUserAnswerStateChanged: ((User, Bool) -> Void)?
     private var onGameStarted: (() -> Void)?
     private var onRolesAssigned: (([User]) -> Void)?
-    private var onAnswerRevealed: (([PlayerAnswer]) -> Void)?
+    private var onAnswerSubmitted: ((PlayerAnswer) -> Void)?
     private var onError: ((String) -> Void)?
 
     private var currentKeyword: String = ""
@@ -41,20 +40,18 @@ class MockGameRepository: GameRepositoryProtocol {
         onUserLeft: @escaping (User) -> Void,
         onUserReadyStateChanged: @escaping (User, Bool) -> Void,
         onUserMuteStateChanged: @escaping (User, Bool) -> Void,
-        onUserAnswerStateChanged: @escaping (User, Bool) -> Void,
         onGameStarted: @escaping () -> Void,
         onRolesAssigned: @escaping ([User]) -> Void,
-        onAnswerRevealed: @escaping ([PlayerAnswer]) -> Void,
+        onAnswerSubmitted: @escaping (PlayerAnswer) -> Void,
         onError: @escaping (String) -> Void
     ) {
         self.onUserJoined = onUserJoined
         self.onUserLeft = onUserLeft
         self.onUserReadyStateChanged = onUserReadyStateChanged
         self.onUserMuteStateChanged = onUserMuteStateChanged
-        self.onUserAnswerStateChanged = onUserAnswerStateChanged
         self.onGameStarted = onGameStarted
         self.onRolesAssigned = onRolesAssigned
-        self.onAnswerRevealed = onAnswerRevealed
+        self.onAnswerSubmitted = onAnswerSubmitted
         self.onError = onError
     }
     
@@ -202,12 +199,19 @@ class MockGameRepository: GameRepositoryProtocol {
     /// 回答送信のシミュレーション
     private func simulateSubmitAnswer(me: User, selectedUser: User) {
         Task {
-            // 自分の回答状態を更新
+            // 人狼を取得
+            guard let werewolf = await MainActor.run(body: { self.users.first(where: { $0.role == .werewolf }) }) else {
+                return
+            }
+            
+            // 自分の回答を送信
             await MainActor.run {
-                if let index = self.users.firstIndex(where: { $0.id == me.id }) {
-                    self.users[index].hasAnswered = true
-                    self.onUserAnswerStateChanged?(self.users[index], true)
-                }
+                let myAnswer = PlayerAnswer(
+                    answer: me,
+                    selectedUser: selectedUser,
+                    isCorrect: selectedUser.id == werewolf.id
+                )
+                self.onAnswerSubmitted?(myAnswer)
             }
             
             // 他のプレイヤーの回答をシミュレート（1-3秒後）
@@ -216,47 +220,16 @@ class MockGameRepository: GameRepositoryProtocol {
                 try? await Task.sleep(nanoseconds: delay)
                 
                 await MainActor.run {
-                    if let index = self.users.firstIndex(where: { $0.id == otherUser.id }) {
-                        self.users[index].hasAnswered = true
-                        self.onUserAnswerStateChanged?(self.users[index], true)
-                    }
+                    // ダミーの回答（ランダム）
+                    let otherUsers = self.users.filter { $0.id != otherUser.id }
+                    let randomSelectedUser = otherUsers.randomElement()!
+                    let answer = PlayerAnswer(
+                        answer: otherUser,
+                        selectedUser: randomSelectedUser,
+                        isCorrect: randomSelectedUser.id == werewolf.id
+                    )
+                    self.onAnswerSubmitted?(answer)
                 }
-            }
-            
-            // 全員が回答したら結果発表（1秒後）
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
-            
-            await MainActor.run {
-                // 人狼を取得
-                guard let werewolf = self.users.first(where: { $0.role == .werewolf }) else {
-                    return
-                }
-                
-                // 全員の回答を生成
-                var allAnswers: [PlayerAnswer] = []
-                
-                for user in self.users {
-                    if user.id == me.id {
-                        // 自分の回答
-                        allAnswers.append(PlayerAnswer(
-                            answer: user,
-                            selectedUser: selectedUser,
-                            isCorrect: selectedUser.id == werewolf.id
-                        ))
-                    } else {
-                        // ダミーの回答（ランダム）
-                        let otherUsers = self.users.filter { $0.id != user.id }
-                        let randomSelectedUser = otherUsers.randomElement()!
-                        allAnswers.append(PlayerAnswer(
-                            answer: user,
-                            selectedUser: randomSelectedUser,
-                            isCorrect: randomSelectedUser.id == werewolf.id
-                        ))
-                    }
-                }
-                
-                // 結果発表イベントを送信
-                self.onAnswerRevealed?(allAnswers)
             }
         }
     }

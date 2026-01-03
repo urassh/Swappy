@@ -123,6 +123,8 @@ struct RoleRevealView: View {
             return [Color.red.opacity(0.8), Color.orange.opacity(0.6)]
         case .villager:
             return [Color.blue.opacity(0.8), Color.cyan.opacity(0.6)]
+        case .undefined:
+            return [Color.gray.opacity(0.8), Color.gray.opacity(0.6)]
         }
     }
     
@@ -137,6 +139,8 @@ struct RoleRevealView: View {
             return "moon.stars.fill"
         case .villager:
             return "person.3.fill"
+        case .undefined:
+            return "questionmark.circle.fill"
         }
     }
     
@@ -151,6 +155,8 @@ struct RoleRevealView: View {
             return Color.red
         case .villager:
             return Color.blue
+        case .undefined:
+            return Color.gray
         }
     }
     
@@ -165,6 +171,8 @@ struct RoleRevealView: View {
             return "人狼"
         case .villager:
             return "市民"
+        case .undefined:
+            return "未設定"
         }
     }
     
@@ -179,6 +187,8 @@ struct RoleRevealView: View {
             return Color.red
         case .villager:
             return Color.blue
+        case .undefined:
+            return Color.gray
         }
     }
     
@@ -193,6 +203,8 @@ struct RoleRevealView: View {
             return "あなたは顔が入れ替わります。\nバレないように振る舞いましょう！"
         case .villager:
             return "誰が顔が入れ替わったか\n見極めてください！"
+        case .undefined:
+            return "役職が割り当てられていません"
         }
     }
 }

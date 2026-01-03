@@ -14,8 +14,8 @@ class AnswerRevealViewModel {
     var users: [User] = []
     
     private let allAnswers: [PlayerAnswer]
-    private let wolfUser: User
-    private let me: User
+    let wolfUser: User
+    let me: User
     private let onRestart: () -> Void
     private var cancellables = Set<AnyCancellable>()
     
@@ -41,12 +41,8 @@ class AnswerRevealViewModel {
         allAnswers
     }
     
-    var correctUser: User? {
-        users.first(where: { $0.id == swappedUserId })
-    }
-    
-    var myResult: PlayerAnswer? {
-        allAnswers.first(where: { $0.id == myUserId })
+    var myAnswer: PlayerAnswer? {
+        allAnswers.first(where: { $0.answer.id == me.id })
     }
     
     func restart() {

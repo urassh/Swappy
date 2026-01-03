@@ -19,7 +19,6 @@ struct User: Identifiable, Equatable, Hashable {
     var isMuted: Bool = false
     var isReady: Bool = false
     var role: Role = .undefined
-    var hasAnswered: Bool = false
     
     // 通話用のUInt型ID（userIdのハッシュ値から32ビット符号付き整数の範囲内で生成）
     var talkId: UInt {
@@ -39,12 +38,4 @@ struct PlayerAnswer: Identifiable {
     let answer: User
     let selectedUser: User
     let isCorrect: Bool
-    
-    var playerName: String {
-        answer.name
-    }
-    
-    var selectedUserId: String {
-        selectedUser.id.uuidString
-    }
 }

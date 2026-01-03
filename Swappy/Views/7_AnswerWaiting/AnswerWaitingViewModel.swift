@@ -11,28 +11,32 @@ import Combine
 /// 回答待機画面のViewModel
 @Observable
 class AnswerWaitingViewModel {
-    var users: [User] = []
+    var allAnswers: [PlayerAnswer] = []
+    var totalUserCount: Int = 0
     
-    private let me: User
     private var cancellables = Set<AnyCancellable>()
     
     init(
-        usersPublisher: AnyPublisher<[User], Never>,
-        me: User
+        allAnswersPublisher: AnyPublisher<[PlayerAnswer], Never>,
+        usersPublisher: AnyPublisher<[User], Never>
     ) {
-        self.me = me
+        // allAnswersの購読
+        allAnswersPublisher
+            .assign(to: \AnswerWaitingViewModel.allAnswers, on: self)
+            .store(in: &cancellables)
         
-        // usersの購読
+        // usersの購読（ユーザー数のみ）
         usersPublisher
-            .assign(to: \AnswerWaitingViewModel.users, on: self)
+            .map { $0.count }
+            .assign(to: \AnswerWaitingViewModel.totalUserCount, on: self)
             .store(in: &cancellables)
     }
     
     var answeredCount: Int {
-        users.filter { $0.hasAnswered }.count
+        allAnswers.count
     }
     
     var totalCount: Int {
-        users.count
+        totalUserCount
     }
 }

@@ -146,17 +146,13 @@ struct VideoTileView: View {
 
 #Preview {
     let users = [
-        User(id: "1", name: "あなた"),
-        User(id: "2", name: "太郎"),
-        User(id: "3", name: "花子"),
-        User(id: "4", name: "次郎")
+        User(name: "あなた"),
+        User(name: "太郎"),
+        User(name: "花子"),
+        User(name: "次郎")
     ]
     let usersPublisher = Just(users).eraseToAnyPublisher()
     
-    return VideoCallView(
-        usersPublisher: usersPublisher,
-        swappedUserId: "2",
-        gameRepository: MockGameRepository(),
-        onTimeUp: { print("Time up") }
-    )
+    VideoCallView(
+        usersPublisher: usersPublisher, onTimeUp: {})
 }

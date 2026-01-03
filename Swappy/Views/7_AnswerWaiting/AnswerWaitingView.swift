@@ -12,12 +12,12 @@ struct AnswerWaitingView: View {
     @State private var viewModel: AnswerWaitingViewModel
     
     init(
-        usersPublisher: AnyPublisher<[User], Never>,
-        me: User
+        allAnswersPublisher: AnyPublisher<[PlayerAnswer], Never>,
+        usersPublisher: AnyPublisher<[User], Never>
     ) {
         self.viewModel = AnswerWaitingViewModel(
-            usersPublisher: usersPublisher,
-            me: me
+            allAnswersPublisher: allAnswersPublisher,
+            usersPublisher: usersPublisher
         )
     }
     
@@ -93,16 +93,23 @@ struct AnswerWaitingView: View {
 }
 
 #Preview {
-    let users = [
-        User(name: "あなた"),
-        User(name: "太郎"),
-        User(name: "花子"),
-        User(name: "次郎")
-    ]
+    let user1 = User(name: "あなた")
+    let user2 = User(name: "太郎")
+    let user3 = User(name: "花子")
+    let user4 = User(name: "次郎")
+    
+    let users = [user1, user2, user3, user4]
     let usersPublisher = Just(users).eraseToAnyPublisher()
     
+    // 2人が既に回答済み
+    let answers = [
+        PlayerAnswer(answer: user1, selectedUser: user2, isCorrect: false),
+        PlayerAnswer(answer: user2, selectedUser: user3, isCorrect: false)
+    ]
+    let allAnswersPublisher = Just(answers).eraseToAnyPublisher()
+    
     AnswerWaitingView(
-        usersPublisher: usersPublisher,
-        me: users.first!
+        allAnswersPublisher: allAnswersPublisher,
+        usersPublisher: usersPublisher
     )
 }

@@ -65,8 +65,8 @@ struct ContentView: View {
                 
             case .answerWaiting:
                 AnswerWaitingView(
-                    usersPublisher: coordinator.usersPublisher,
-                    me: coordinator.me!
+                    allAnswersPublisher: coordinator.allAnswersPublisher,
+                    usersPublisher: coordinator.usersPublisher
                 )
                 
             case .answerReveal:

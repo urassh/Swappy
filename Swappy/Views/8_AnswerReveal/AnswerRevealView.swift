@@ -22,17 +22,9 @@ struct AnswerRevealView: View {
             usersPublisher: usersPublisher,
             allAnswers: allAnswers,
             wolfUser: wolfUser,
-            me: User,
+            me: me,
             onRestart: onRestart
         )
-    }
-    
-    var correctUser: User? {
-        viewModel.correctUser
-    }
-    
-    var myResult: PlayerAnswer? {
-        viewModel.myResult
     }
     
     var body: some View {
@@ -40,8 +32,8 @@ struct AnswerRevealView: View {
             // 背景
             LinearGradient(
                 gradient: Gradient(colors: [
-                    myResult?.isCorrect == true ? Color.green.opacity(0.7) : Color.red.opacity(0.7),
-                    myResult?.isCorrect == true ? Color.blue.opacity(0.7) : Color.orange.opacity(0.7)
+                    viewModel.myAnswer?.isCorrect == true ? Color.green.opacity(0.7) : Color.red.opacity(0.7),
+                    viewModel.myAnswer?.isCorrect == true ? Color.blue.opacity(0.7) : Color.orange.opacity(0.7)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -55,7 +47,7 @@ struct AnswerRevealView: View {
                     
                     // 結果表示
                     VStack(spacing: 20) {
-                        if myResult?.isCorrect == true {
+                        if viewModel.myAnswer?.isCorrect == true {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 80))
                                 .foregroundColor(.white)
@@ -89,7 +81,7 @@ struct AnswerRevealView: View {
                                             .foregroundColor(.purple)
                                     )
                                 
-                                Text(correctUser?.name ?? "不明")
+                                Text(viewModel.wolfUser.name)
                                     .font(.system(size: 28, weight: .bold))
                                     .foregroundColor(.white)
                             }
@@ -120,7 +112,7 @@ struct AnswerRevealView: View {
                                                 .font(.system(size: 16))
                                         )
                                     
-                                    Text(answer.playerName)
+                                    Text(answer.answer.name)
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(.white)
                                 }
@@ -129,8 +121,7 @@ struct AnswerRevealView: View {
                                     .foregroundColor(.white.opacity(0.6))
                                 
                                 // 回答
-                                if let selectedUserId = answer.selectedUserId,
-                                   let selectedUser = viewModel.users.first(where: { $0.id == selectedUserId }) {
+                                if let selectedUser = viewModel.users.first(where: { $0.id == answer.selectedUser.id }) {
                                     Text(selectedUser.name)
                                         .font(.system(size: 16, weight: .medium))
                                         .foregroundColor(.white)
@@ -186,29 +177,32 @@ struct AnswerRevealView: View {
         }
     }
 }
-
-#Preview {
-    let users = [
-        User(id: "1", name: "あなた"),
-        User(id: "2", name: "太郎"),
-        User(id: "3", name: "花子"),
-        User(id: "4", name: "次郎")
-    ]
-    
-    let answers = [
-        PlayerAnswer(id: "1", playerName: "あなた", selectedUserId: "2", isCorrect: true),
-        PlayerAnswer(id: "2", playerName: "太郎", selectedUserId: "3", isCorrect: false),
-        PlayerAnswer(id: "3", playerName: "花子", selectedUserId: "2", isCorrect: true),
-        PlayerAnswer(id: "4", playerName: "次郎", selectedUserId: "2", isCorrect: true)
-    ]
-    
-    let usersPublisher = Just(users).eraseToAnyPublisher()
-    
-    return AnswerRevealView(
-        usersPublisher: usersPublisher,
-        allAnswers: answers,
-        swappedUserId: "2",
-        myUserId: "1",
-        onRestart: { print("Restart tapped") }
-    )
-}
+//
+//#Preview {
+//    let user1 = User(name: "あなた")
+//    var user2 = User(name: "太郎")
+//    let user3 = User(name: "花子")
+//    let user4 = User(name: "次郎")
+//    
+//    // 太郎を人狼に設定
+//    user2.role = .werewolf
+//    
+//    let users = [user1, user2, user3, user4]
+//    
+//    let answers = [
+//        PlayerAnswer(answer: user1, selectedUser: user2, isCorrect: true),
+//        PlayerAnswer(answer: user2, selectedUser: user3, isCorrect: false),
+//        PlayerAnswer(answer: user3, selectedUser: user2, isCorrect: true),
+//        PlayerAnswer(answer: user4, selectedUser: user2, isCorrect: true)
+//    ]
+//    
+//    let usersPublisher = Just(users).eraseToAnyPublisher()
+//    
+//    AnswerRevealView(
+//        usersPublisher: usersPublisher,
+//        allAnswers: answers,
+//        wolfUser: user2,
+//        me: user1,
+//        onRestart: { print("Restart tapped") }
+//    )
+//}

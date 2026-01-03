@@ -30,7 +30,22 @@ class GameCoordinator {
     var usersPublisher: AnyPublisher<[User], Never> {
         usersSubject.eraseToAnyPublisher()
     }
-    var allAnswers: [PlayerAnswer] = []
+    
+    var allAnswers: [PlayerAnswer] = [] {
+        didSet {
+            allAnswersSubject.send(allAnswers)
+            // 全員の回答が揃ったらAnswerRevealに遷移
+            if allAnswers.count == users.count && currentScreen == .answerWaiting {
+                navigate(to: .answerReveal)
+            }
+        }
+    }
+    
+    private let allAnswersSubject = CurrentValueSubject<[PlayerAnswer], Never>([])
+    var allAnswersPublisher: AnyPublisher<[PlayerAnswer], Never> {
+        allAnswersSubject.eraseToAnyPublisher()
+    }
+    
     var me: User? = nil
     var wolfUser: User? {
         users.first(where: { $0.role == .werewolf })
@@ -150,16 +165,6 @@ extension GameCoordinator {
     }
     
     func submitAnswer(selectUser: User) {
-        let answer = PlayerAnswer(answer: self.me!, selectedUser: selectUser, isCorrect: selectUser.isWolf)
-        
-        // 楽観的更新: まず自分の状態を更新
-        self.me!.hasAnswered = true
-        
-        // users内の自分も更新
-        if let index = users.firstIndex(where: { $0.id == self.me!.id }) {
-            users[index].hasAnswered = true
-        }
-        
         // Repositoryに送信
         gameRepository.submitAnswer(me: self.me!, selectedUser: selectUser)
         
@@ -199,11 +204,6 @@ extension GameCoordinator {
                     self?.handleUserMuteStateChanged(user: user, isMuted: isMuted)
                 }
             },
-            onUserAnswerStateChanged: { [weak self] user, hasAnswered in
-                DispatchQueue.main.async {
-                    self?.handleUserAnswerStateChanged(user: user, hasAnswered: hasAnswered)
-                }
-            },
             onGameStarted: { [weak self] in
                 DispatchQueue.main.async {
                     self?.handleGameStarted()
@@ -214,9 +214,9 @@ extension GameCoordinator {
                     self?.handleRolesAssigned(users: users)
                 }
             },
-            onAnswerRevealed: { [weak self] answers in
+            onAnswerSubmitted: { [weak self] answer in
                 DispatchQueue.main.async {
-                    self?.handleAnswerRevealed(answers)
+                    self?.handleAnswerSubmitted(answer)
                 }
             },
             onError: { [weak self] message in
@@ -255,14 +255,6 @@ extension GameCoordinator {
         }
     }
     
-    private func handleUserAnswerStateChanged(user: User, hasAnswered: Bool) {
-        if let index = users.firstIndex(where: { $0.id == user.id }) {
-            users[index].hasAnswered = hasAnswered
-            // 配列の要素を直接変更したので、明示的に変更通知を送信
-            usersSubject.send(users)
-        }
-    }
-    
     private func handleGameStarted() {
         if (currentScreen != .roleWaiting) {
             print("🎮 Game started!")
@@ -277,9 +269,11 @@ extension GameCoordinator {
         navigate(to: .roleReveal)
     }
     
-    private func handleAnswerRevealed(_ answers: [PlayerAnswer]) {
-        self.allAnswers = answers
-        navigate(to: .answerReveal)
+    private func handleAnswerSubmitted(_ answer: PlayerAnswer) {
+        // 重複チェック（同じユーザーの回答は一度だけ）
+        if !allAnswers.contains(where: { $0.answer.id == answer.answer.id }) {
+            allAnswers.append(answer)
+        }
     }
     
     private func handleError(_ message: String) {
