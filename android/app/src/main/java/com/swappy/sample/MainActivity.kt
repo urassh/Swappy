@@ -7,6 +7,8 @@ import android.os.Build
 import android.view.View
 import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import com.swappy.sample.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -22,6 +24,13 @@ class MainActivity : AppCompatActivity() {
             val blur = RenderEffect.createBlurEffect(50f, 50f, Shader.TileMode.CLAMP)
             binding.joinGlow.setRenderEffect(blur)
             binding.waitingJoinGlow.setRenderEffect(blur)
+        }
+
+        binding.callTimerCompose.setViewCompositionStrategy(
+            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+        )
+        binding.callTimerCompose.setContent {
+            CallTimerStopwatch(totalSeconds = 10, size = 90.dp)
         }
 
         binding.startJoinContainer.setOnClickListener {
@@ -53,6 +62,21 @@ class MainActivity : AppCompatActivity() {
                 R.drawable.ic_waiting_mic_off
             }
             binding.waitingMicToggle.setImageResource(micIcon)
+        }
+
+        binding.waitingJoinContainer.setOnClickListener {
+            binding.waitingContent.visibility = View.GONE
+            binding.callContent.visibility = View.VISIBLE
+        }
+
+        binding.callBack.setOnClickListener {
+            binding.callContent.visibility = View.GONE
+            binding.waitingContent.visibility = View.VISIBLE
+        }
+
+        binding.waitingBack.setOnClickListener {
+            binding.waitingContent.visibility = View.GONE
+            binding.startContent.visibility = View.VISIBLE
         }
     }
 

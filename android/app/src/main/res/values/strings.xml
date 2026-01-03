@@ -18,4 +18,5 @@
     <string name="waiting_member_ranger_name">レンジャー</string>
     <string name="waiting_status_ready">準備完了</string>
     <string name="waiting_status_wait">準備中…</string>
+    <string name="call_tip_text">誰か人狼（顔が変わった人）か見極めよう！</string>
 </resources>
