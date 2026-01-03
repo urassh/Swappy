@@ -13,14 +13,10 @@ struct VideoCallView: View {
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
-        swappedUserId: String?,
-        gameRepository: GameRepositoryProtocol,
         onTimeUp: @escaping () -> Void
     ) {
         self.viewModel = VideoCallViewModel(
             usersPublisher: usersPublisher,
-            swappedUserId: swappedUserId,
-            gameRepository: gameRepository,
             onTimeUp: onTimeUp
         )
     }
@@ -72,7 +68,7 @@ struct VideoCallView: View {
                                     if index < viewModel.users.count {
                                         VideoTileView(
                                             user: viewModel.users[index],
-                                            isSwapped: viewModel.users[index].id == viewModel.swappedUserId
+                                            isSwapped: viewModel.users[index].isWolf
                                         )
                                     }
                                 }

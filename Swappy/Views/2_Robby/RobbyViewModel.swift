@@ -13,22 +13,24 @@ import Combine
 class RobbyViewModel {
     var isMicMuted: Bool = false
     var users: [User] = []
-    var isCallReady: Bool = false  // Agora(and Akool)の接続準備完了状態
     
-    private let myUserId: String
+    let me: User
     private let onMuteMic: () -> Void
     private let onUnmuteMic: () -> Void
+    private let onStartGame: () -> Void
     private var cancellables = Set<AnyCancellable>()
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
-        myUserId: String,
+        me: User,
         onMuteMic: @escaping () -> Void,
-        onUnmuteMic: @escaping () -> Void
+        onUnmuteMic: @escaping () -> Void,
+        onStartGame: @escaping () -> Void
     ) {
-        self.myUserId = myUserId
+        self.me = me
         self.onMuteMic = onMuteMic
         self.onUnmuteMic = onUnmuteMic
+        self.onStartGame = onStartGame
         
         // usersの購読
         usersPublisher
@@ -38,12 +40,24 @@ class RobbyViewModel {
     
     // MARK: - Computed Properties
     
-    var myUser: User? {
-        users.first(where: { $0.id == myUserId })
-    }
-    
     var allUsersReady: Bool {
         !users.isEmpty && users.allSatisfy { $0.isReady }
+    }
+    
+    /// ゲーム開始可能かどうか
+    var canStartGame: Bool {
+        users.count >= 3 && allUsersReady
+    }
+    
+    /// ゲーム開始できない理由
+    var startGameDisabledReason: String? {
+        if users.count < 3 {
+            return "ゲームには3人以上が必要です"
+        }
+        if !allUsersReady {
+            return "プレイヤー全員が準備完了ではありません"
+        }
+        return nil
     }
     
     // MARK: - Actions
@@ -55,5 +69,10 @@ class RobbyViewModel {
             onMuteMic()
         }
         isMicMuted.toggle()
+    }
+    
+    func startGame() {
+        guard canStartGame else { return }
+        onStartGame()
     }
 }

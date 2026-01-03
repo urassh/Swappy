@@ -14,21 +14,21 @@ class AnswerRevealViewModel {
     var users: [User] = []
     
     private let allAnswers: [PlayerAnswer]
-    private let swappedUserId: String
-    private let myUserId: String
+    private let wolfUser: User
+    private let me: User
     private let onRestart: () -> Void
     private var cancellables = Set<AnyCancellable>()
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
         allAnswers: [PlayerAnswer],
-        swappedUserId: String,
-        myUserId: String,
+        wolfUser: User,
+        me: User,
         onRestart: @escaping () -> Void
     ) {
         self.allAnswers = allAnswers
-        self.swappedUserId = swappedUserId
-        self.myUserId = myUserId
+        self.wolfUser = wolfUser
+        self.me = me
         self.onRestart = onRestart
         
         // usersの購読

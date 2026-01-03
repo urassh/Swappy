@@ -17,8 +17,10 @@ class MockGameRepository: GameRepositoryProtocol {
     private var onUserJoined: ((User) -> Void)?
     private var onUserLeft: ((User) -> Void)?
     private var onUserReadyStateChanged: ((User, Bool) -> Void)?
-    private var onUserMuteStateChanged: ((String, Bool) -> Void)?
-    private var onRolesAssigned: (([String: Role], String) -> Void)?
+    private var onUserMuteStateChanged: ((User, Bool) -> Void)?
+    private var onUserAnswerStateChanged: ((User, Bool) -> Void)?
+    private var onGameStarted: (() -> Void)?
+    private var onRolesAssigned: (([User]) -> Void)?
     private var onAnswerRevealed: (([PlayerAnswer]) -> Void)?
     private var onError: ((String) -> Void)?
 
@@ -38,8 +40,10 @@ class MockGameRepository: GameRepositoryProtocol {
         onUserJoined: @escaping (User) -> Void,
         onUserLeft: @escaping (User) -> Void,
         onUserReadyStateChanged: @escaping (User, Bool) -> Void,
-        onUserMuteStateChanged: @escaping (String, Bool) -> Void,
-        onRolesAssigned: @escaping ([String: Role], String) -> Void,
+        onUserMuteStateChanged: @escaping (User, Bool) -> Void,
+        onUserAnswerStateChanged: @escaping (User, Bool) -> Void,
+        onGameStarted: @escaping () -> Void,
+        onRolesAssigned: @escaping ([User]) -> Void,
         onAnswerRevealed: @escaping ([PlayerAnswer]) -> Void,
         onError: @escaping (String) -> Void
     ) {
@@ -47,12 +51,14 @@ class MockGameRepository: GameRepositoryProtocol {
         self.onUserLeft = onUserLeft
         self.onUserReadyStateChanged = onUserReadyStateChanged
         self.onUserMuteStateChanged = onUserMuteStateChanged
+        self.onUserAnswerStateChanged = onUserAnswerStateChanged
+        self.onGameStarted = onGameStarted
         self.onRolesAssigned = onRolesAssigned
         self.onAnswerRevealed = onAnswerRevealed
         self.onError = onError
     }
     
-    func joinRoom(keyword: String, me: User) async throws {
+    func joinRoom(keyword: String, me: User) {
         self.currentKeyword = keyword
         
         // ルームが存在しない場合は初期化
@@ -60,104 +66,41 @@ class MockGameRepository: GameRepositoryProtocol {
             Self.rooms[keyword] = []
         }
         
-        // 自分を追加
-        users.append(me)
-        onUserJoined?(me)
-        
-        // シミュレーション: 3秒後に他のユーザーが参加
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
-            guard let self = self else { return }
+        // BackEndのシミュレーション開始（自分の参加 + 他のユーザー参加）
+        simulateJoinRoom(me: me)
+    }
+    
+    func leaveRoom(me: User) {
+        simulateLeaveRoom(me: me)
+    }
+    
+    func completeCallReady(me: User) {
+        simulateCompleteCallReady(me: me)
+    }
+    
+    func startGame() {
+        simulateStartGame()
+    }
+    
+    func toggleMute(me: User, isMuted: Bool) {
+        Task {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
             
-            let mockUsers = [
-                User(id: "2", name: "太郎", isReady: true),
-                User(id: "3", name: "花子", isReady: true),
-                User(id: "4", name: "次郎", isReady: true)
-            ]
-            
-            for user in mockUsers {
-                self.users.append(user)
-                self.onUserJoined?(user)
+            await MainActor.run {
+                guard let index = self.users.indices.first else { return }
+                
+                self.users[index].isMuted = isMuted
+                self.onUserMuteStateChanged?(self.users[index], isMuted)
             }
         }
     }
     
-    func leaveRoom() async throws {
-        if !currentKeyword.isEmpty {
-            Self.rooms[currentKeyword] = nil
-        }
+    func submitAnswer(me: User, selectedUser: User) {
+        simulateSubmitAnswer(me: me, selectedUser: selectedUser)
     }
     
-    func completeCallReady(me: User) async throws {
-        // 自分の準備状態を切り替え
-        if let index = users.firstIndex(where: { $0.id == me.id }) {
-            users[index].isReady.toggle()
-            let user = users[index]
-            
-            onUserReadyStateChanged?(user, user.isReady)
-            
-            // 全員が準備完了したら役職を割り当て
-            if users.allSatisfy({ $0.isReady }) {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                    self?.assignRoles()
-                }
-            }
-        }
-    }
-    
-    func toggleMute(me: User, isMuted: Bool) async throws {
-        if let index = users.firstIndex(where: { $0.id == me.id }) {
-            users[index].isMuted = isMuted
-            onUserMuteStateChanged?(me.id, isMuted)
-        }
-    }
-    
-    func submitAnswer(me: User, selectUserId: String) async throws {
-        // シミュレーション: 5秒後に結果を発表
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
-            guard let self = self else { return }
-            
-            // 人狼を取得
-            guard let werewolf = self.users.first(where: { $0.role == .werewolf }) else {
-                return
-            }
-            
-            // 全員の回答を生成
-            var allAnswers: [PlayerAnswer] = []
-            
-            for user in self.users {
-                if user.id == me.id {
-                    // 自分の回答
-                    let isCorrect = (selectUserId == werewolf.id)
-                    allAnswers.append(PlayerAnswer(
-                        id: user.id,
-                        playerName: user.name,
-                        selectedUserId: selectUserId,
-                        isCorrect: isCorrect
-                    ))
-                } else {
-                    // ダミーの回答（ランダム）
-                    let otherUsers = self.users.filter { $0.id != user.id }
-                    let randomAnswer = otherUsers.randomElement()?.id
-                    let isCorrect = (randomAnswer == werewolf.id)
-                    
-                    allAnswers.append(PlayerAnswer(
-                        id: user.id,
-                        playerName: user.name,
-                        selectedUserId: randomAnswer,
-                        isCorrect: isCorrect
-                    ))
-                }
-            }
-            
-            // 結果発表イベントを送信
-            self.onAnswerRevealed?(allAnswers)
-        }
-    }
-    
-    func resetGame() async throws {
-        if !currentKeyword.isEmpty {
-            Self.rooms[currentKeyword] = nil
-        }
+    func resetGame() {
+        simulateResetGame()
     }
     
     // MARK: - Private Methods
@@ -166,16 +109,168 @@ class MockGameRepository: GameRepositoryProtocol {
         // ランダムに1人を人狼に選ぶ
         let werewolfIndex = Int.random(in: 0..<users.count)
         
-        var userRoles: [String: Role] = [:]
         for (index, user) in users.enumerated() {
             let role: Role = (index == werewolfIndex) ? .werewolf : .villager
             users[index].role = role
-            userRoles[user.id] = role
         }
-        
-        let swappedUserId = users[werewolfIndex].id
-        
+                
         // 役職割り当てイベントを送信
-        onRolesAssigned?(userRoles, swappedUserId)
+        onRolesAssigned?(users)
+    }
+    
+    // MARK: - Backend Simulation
+    
+    /// ルーム参加のシミュレーション（自分 + 他のユーザー）
+    private func simulateJoinRoom(me: User) {
+        Task {
+            // 通信時間をシミュレート（0.5秒）
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            
+            await MainActor.run {
+                self.users.append(me)
+                self.onUserJoined?(me)
+            }
+            
+            // 他のユーザーの参加（3秒後）
+            try? await Task.sleep(nanoseconds: 2_500_000_000) // 残り2.5秒
+            
+            let mockUsers = [
+                User(name: "太郎", isReady: true),
+                User(name: "花子", isReady: true),
+                User(name: "次郎", isReady: true)
+            ]
+            
+            for user in mockUsers {
+                await MainActor.run {
+                    self.users.append(user)
+                    self.onUserJoined?(user)
+                }
+            }
+        }
+    }
+    
+    /// ルーム退出のシミュレーション
+    private func simulateLeaveRoom(me: User) {
+        Task {
+            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
+            
+            await MainActor.run {
+                if !self.currentKeyword.isEmpty {
+                    self.currentKeyword = ""
+                    Self.rooms[self.currentKeyword] = nil
+                    self.onUserLeft?(me)
+                }
+            }
+        }
+    }
+    
+    /// 準備完了のシミュレーション
+    private func simulateCompleteCallReady(me: User) {
+        Task {
+            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
+            
+            await MainActor.run {
+                // 自分の準備状態を更新
+                if let index = self.users.firstIndex(where: { $0.id == me.id }) {
+                    self.users[index].isReady = true
+                    self.onUserReadyStateChanged?(self.users[index], true)
+                }
+            }
+        }
+    }
+    
+    /// ゲーム開始のシミュレーション
+    private func simulateStartGame() {
+        Task {
+            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
+            
+            await MainActor.run {
+                // ゲーム開始イベントを送信
+                self.onGameStarted?()
+                
+                // 役職を割り当て
+                Task {
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+                    await MainActor.run {
+                        self.assignRoles()
+                    }
+                }
+            }
+        }
+    }
+
+    /// 回答送信のシミュレーション
+    private func simulateSubmitAnswer(me: User, selectedUser: User) {
+        Task {
+            // 自分の回答状態を更新
+            await MainActor.run {
+                if let index = self.users.firstIndex(where: { $0.id == me.id }) {
+                    self.users[index].hasAnswered = true
+                    self.onUserAnswerStateChanged?(self.users[index], true)
+                }
+            }
+            
+            // 他のプレイヤーの回答をシミュレート（1-3秒後）
+            for otherUser in users.filter({ $0.id != me.id }) {
+                let delay = UInt64.random(in: 1_000_000_000...3_000_000_000)
+                try? await Task.sleep(nanoseconds: delay)
+                
+                await MainActor.run {
+                    if let index = self.users.firstIndex(where: { $0.id == otherUser.id }) {
+                        self.users[index].hasAnswered = true
+                        self.onUserAnswerStateChanged?(self.users[index], true)
+                    }
+                }
+            }
+            
+            // 全員が回答したら結果発表（1秒後）
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            
+            await MainActor.run {
+                // 人狼を取得
+                guard let werewolf = self.users.first(where: { $0.role == .werewolf }) else {
+                    return
+                }
+                
+                // 全員の回答を生成
+                var allAnswers: [PlayerAnswer] = []
+                
+                for user in self.users {
+                    if user.id == me.id {
+                        // 自分の回答
+                        allAnswers.append(PlayerAnswer(
+                            answer: user,
+                            selectedUser: selectedUser,
+                            isCorrect: selectedUser.id == werewolf.id
+                        ))
+                    } else {
+                        // ダミーの回答（ランダム）
+                        let otherUsers = self.users.filter { $0.id != user.id }
+                        let randomSelectedUser = otherUsers.randomElement()!
+                        allAnswers.append(PlayerAnswer(
+                            answer: user,
+                            selectedUser: randomSelectedUser,
+                            isCorrect: randomSelectedUser.id == werewolf.id
+                        ))
+                    }
+                }
+                
+                // 結果発表イベントを送信
+                self.onAnswerRevealed?(allAnswers)
+            }
+        }
+    }
+    
+    /// ゲームリセットのシミュレーション
+    private func simulateResetGame() {
+        Task {
+            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
+            
+            await MainActor.run {
+                if !self.currentKeyword.isEmpty {
+                    Self.rooms[self.currentKeyword] = nil
+                }
+            }
+        }
     }
 }

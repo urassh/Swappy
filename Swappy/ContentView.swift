@@ -16,72 +16,65 @@ struct ContentView: View {
             case .keywordInput:
                 KeywordInputView(
                     onEnterRoom: { keyword, userName in
-                        coordinator.enterRoom(keyword: keyword, userName: userName)
+                        coordinator.joinRoom(keyword: keyword, userName: userName)
                     }
                 )
 
             case .robby:
                 RobbyView(
-                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
-                    myUserId: coordinator.myUserId,
-                    onToggleReady: {
-                        Task {
-                            try? await coordinator.gameRepository.toggleReady()
-                        }
-                    },
+                    usersPublisher: coordinator.usersPublisher,
+                    me: coordinator.me!,
                     onMuteMic: {
-                        coordinator.agoraManager?.audio?.mute()
-                        Task {
-                            try? await coordinator.gameRepository.toggleMute(isMuted: true)
-                        }
+                        coordinator.toggleMute(isMuted: true)
                     },
                     onUnmuteMic: {
-                        coordinator.agoraManager?.audio?.unmute()
-                        Task {
-                            try? await coordinator.gameRepository.toggleMute(isMuted: false)
-                        }
+                        coordinator.toggleMute(isMuted: false)
+                    },
+                    onStartGame: {
+                        coordinator.startGame()
                     }
                 )
                 
+            case .roleWaiting:
+                RoleWaitingView()
+                
             case .roleReveal:
                 RoleRevealView(
-                    myRole: coordinator.myRole,
+                    myRole: coordinator.me!.role,
                     onStartVideoCall: {
-                        Task {
-                            try? await coordinator.gameRepository.startVideoCall()
-                        }
+                        coordinator.startVideoCall()
                     }
                 )
                 
             case .videoCall:
                 VideoCallView(
-                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
-                    swappedUserId: coordinator.swappedUserId,
-                    gameRepository: coordinator.gameRepository,
+                    usersPublisher: coordinator.usersPublisher,
                     onTimeUp: {
-                        Task {
-                            try? await coordinator.gameRepository.startAnswerPhase()
-                        }
+                        coordinator.startAnswerInput()
                     }
                 )
                 
             case .answerInput:
                 AnswerInputView(
-                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
-                    myUserId: coordinator.myUserId,
-                    onSubmit: { userId in
-                        Task {
-                            try? await coordinator.gameRepository.submitAnswer(userId: userId)
-                        }
+                    usersPublisher: coordinator.usersPublisher,
+                    me: coordinator.me!,
+                    onSubmit: { user in
+                        coordinator.submitAnswer(selectUser: user)
                     }
+                )
+                
+            case .answerWaiting:
+                AnswerWaitingView(
+                    usersPublisher: coordinator.usersPublisher,
+                    me: coordinator.me!
                 )
                 
             case .answerReveal:
                 AnswerRevealView(
-                    usersPublisher: coordinator.$users.eraseToAnyPublisher(),
+                    usersPublisher: coordinator.usersPublisher,
                     allAnswers: coordinator.allAnswers,
-                    swappedUserId: coordinator.swappedUserId ?? "",
-                    myUserId: coordinator.myUserId,
+                    wolfUser: coordinator.wolfUser!,
+                    me: coordinator.me!,
                     onRestart: {
                         coordinator.resetGame()
                     }

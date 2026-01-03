@@ -14,15 +14,15 @@ struct AnswerRevealView: View {
     init(
         usersPublisher: AnyPublisher<[User], Never>,
         allAnswers: [PlayerAnswer],
-        swappedUserId: String,
-        myUserId: String,
+        wolfUser: User,
+        me: User,
         onRestart: @escaping () -> Void
     ) {
         self.viewModel = AnswerRevealViewModel(
             usersPublisher: usersPublisher,
             allAnswers: allAnswers,
-            swappedUserId: swappedUserId,
-            myUserId: myUserId,
+            wolfUser: wolfUser,
+            me: User,
             onRestart: onRestart
         )
     }

@@ -14,7 +14,6 @@ class VideoCallViewModel {
     var timeRemaining: Int = 10
     var users: [User] = []
     
-    private let gameRepository: GameRepositoryProtocol
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
     
@@ -23,12 +22,8 @@ class VideoCallViewModel {
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
-        swappedUserId: String?,
-        gameRepository: GameRepositoryProtocol,
         onTimeUp: @escaping () -> Void
     ) {
-        self.swappedUserId = swappedUserId
-        self.gameRepository = gameRepository
         self.onTimeUp = onTimeUp
         
         // usersの購読

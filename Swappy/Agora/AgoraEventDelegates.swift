@@ -1,5 +1,5 @@
 //
-//  AgoraDelegates.swift
+//  AgoraEventDelegates.swift
 //  Swappy
 //
 //  Created by 浦山秀斗 on 2026/01/02.

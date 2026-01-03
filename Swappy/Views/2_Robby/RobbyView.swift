@@ -13,15 +13,17 @@ struct RobbyView: View {
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
-        myUserId: String,
+        me: User,
         onMuteMic: @escaping () -> Void,
-        onUnmuteMic: @escaping () -> Void
+        onUnmuteMic: @escaping () -> Void,
+        onStartGame: @escaping () -> Void
     ) {
         self.viewModel = RobbyViewModel(
             usersPublisher: usersPublisher,
-            myUserId: myUserId,
+            me: me,
             onMuteMic: onMuteMic,
-            onUnmuteMic: onUnmuteMic
+            onUnmuteMic: onUnmuteMic,
+            onStartGame: onStartGame
         )
     }
     
@@ -120,16 +122,35 @@ struct RobbyView: View {
                         .cornerRadius(15)
                     }
                     .padding(.horizontal, 30)
-                    
-                    // 全員準備完了の表示
-                    if viewModel.allUsersReady {
-                        Text("全員集合！役職を配布します...")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
+
+                    // ゲーム開始できない理由の表示
+                    if let reason = viewModel.startGameDisabledReason {
+                        Text(reason)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.8))
                             .padding()
-                            .background(Color.white.opacity(0.2))
+                            .background(Color.orange.opacity(0.3))
                             .cornerRadius(10)
                     }
+                    
+                    // ゲーム開始ボタン
+                    Button(action: {
+                        viewModel.startGame()
+                    }) {
+                        HStack {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 20))
+                            Text("ゲーム開始")
+                                .font(.system(size: 18, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(viewModel.canStartGame ? Color.green.opacity(0.8) : Color.gray.opacity(0.5))
+                        .cornerRadius(15)
+                    }
+                    .disabled(!viewModel.canStartGame)
+                    .padding(.horizontal, 30)
                 }
                 .padding(.bottom, 40)
             }
@@ -138,17 +159,19 @@ struct RobbyView: View {
 }
 
 #Preview {
+    let me = User(name: "あなた")
     let users = [
-        User(id: "1", name: "あなた", isReady: true),
-        User(id: "2", name: "太郎", isReady: false),
-        User(id: "3", name: "花子", isReady: true)
+        me,
+        User(name: "太郎", isReady: false),
+        User(name: "花子", isReady: true)
     ]
     let usersPublisher = Just(users).eraseToAnyPublisher()
     
-    return RobbyView(
+    RobbyView(
         usersPublisher: usersPublisher,
-        myUserId: "1",
+        me: me,
         onMuteMic: {},
-        onUnmuteMic: {}
+        onUnmuteMic: {},
+        onStartGame: {}
     )
 }

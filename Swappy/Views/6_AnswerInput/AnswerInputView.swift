@@ -10,16 +10,15 @@ import Combine
 
 struct AnswerInputView: View {
     @State private var viewModel: AnswerInputViewModel
-    @State private var selectedUserId: String? = nil
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
-        myUserId: String,
-        onSubmit: @escaping (String) -> Void
+        me: User,
+        onSubmit: @escaping (User) -> Void
     ) {
         self.viewModel = AnswerInputViewModel(
             usersPublisher: usersPublisher,
-            myUserId: myUserId,
+            me: me,
             onSubmit: onSubmit
         )
     }
@@ -64,16 +63,16 @@ struct AnswerInputView: View {
                 VStack(spacing: 15) {
                     ForEach(viewModel.selectableUsers) { user in
                         Button(action: {
-                            selectedUserId = user.id
+                            viewModel.selectedUser = user
                         }) {
                             HStack(spacing: 15) {
                                 // アバター
                                 Circle()
-                                    .fill(selectedUserId == user.id ? Color.white : Color.white.opacity(0.3))
+                                    .fill(viewModel.selectedUser?.id == user.id ? Color.white : Color.white.opacity(0.3))
                                     .frame(width: 50, height: 50)
                                     .overlay(
                                         Image(systemName: "person.fill")
-                                            .foregroundColor(selectedUserId == user.id ? Color.purple : .white)
+                                            .foregroundColor(viewModel.selectedUser?.id == user.id ? Color.purple : .white)
                                     )
                                 
                                 // 名前
@@ -84,7 +83,7 @@ struct AnswerInputView: View {
                                 Spacer()
                                 
                                 // チェックマーク
-                                if selectedUserId == user.id {
+                                if viewModel.selectedUser?.id == user.id {
                                     Image(systemName: "checkmark.circle.fill")
                                         .font(.system(size: 24))
                                         .foregroundColor(.white)
@@ -92,7 +91,7 @@ struct AnswerInputView: View {
                             }
                             .padding()
                             .background(
-                                selectedUserId == user.id
+                                viewModel.selectedUser?.id == user.id
                                     ? Color.white.opacity(0.3)
                                     : Color.white.opacity(0.15)
                             )
@@ -100,7 +99,7 @@ struct AnswerInputView: View {
                             .overlay(
                                 RoundedRectangle(cornerRadius: 15)
                                     .stroke(
-                                        selectedUserId == user.id ? Color.white : Color.clear,
+                                        viewModel.selectedUser?.id == user.id ? Color.white : Color.clear,
                                         lineWidth: 2
                                     )
                             )
@@ -113,10 +112,7 @@ struct AnswerInputView: View {
                 
                 // 回答ボタン
                 Button(action: {
-                    if let userId = selectedUserId {
-                        viewModel.selectedUserId = userId
-                        viewModel.submitAnswer()
-                    }
+                    viewModel.submitAnswer()
                 }) {
                     Text("回答する")
                         .font(.system(size: 18, weight: .semibold))
@@ -124,7 +120,7 @@ struct AnswerInputView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(
-                            selectedUserId != nil
+                            viewModel.canSubmit
                                 ? LinearGradient(
                                     gradient: Gradient(colors: [Color.green, Color.blue]),
                                     startPoint: .leading,
@@ -139,7 +135,7 @@ struct AnswerInputView: View {
                         .cornerRadius(15)
                         .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
                 }
-                .disabled(selectedUserId == nil)
+                .disabled(!viewModel.canSubmit)
                 .padding(.horizontal, 30)
                 .padding(.bottom, 40)
             }
@@ -149,16 +145,16 @@ struct AnswerInputView: View {
 
 #Preview {
     let users = [
-        User(id: "1", name: "あなた"),
-        User(id: "2", name: "太郎"),
-        User(id: "3", name: "花子"),
-        User(id: "4", name: "次郎")
+        User(name: "あなた"),
+        User(name: "太郎"),
+        User(name: "花子"),
+        User(name: "次郎")
     ]
     let usersPublisher = Just(users).eraseToAnyPublisher()
     
-    return AnswerInputView(
+    AnswerInputView(
         usersPublisher: usersPublisher,
-        myUserId: "1",
+        me: users.first!,
         onSubmit: { userId in print("Selected user: \(userId)") }
     )
 }

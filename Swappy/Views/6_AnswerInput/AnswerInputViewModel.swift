@@ -11,19 +11,19 @@ import Combine
 /// 回答入力画面のViewModel
 @Observable
 class AnswerInputViewModel {
-    var selectedUserId: String? = nil
+    var selectedUser: User? = nil
     var users: [User] = []
     
-    private let myUserId: String
-    private let onSubmit: (String) -> Void
+    private let me: User
+    private let onSubmit: (User) -> Void
     private var cancellables = Set<AnyCancellable>()
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
-        myUserId: String,
-        onSubmit: @escaping (String) -> Void
+        me: User,
+        onSubmit: @escaping (User) -> Void
     ) {
-        self.myUserId = myUserId
+        self.me = me
         self.onSubmit = onSubmit
         
         // usersの購読
@@ -33,15 +33,15 @@ class AnswerInputViewModel {
     }
     
     var selectableUsers: [User] {
-        users.filter { $0.id != myUserId }
+        users.filter { $0.id != me.id }
     }
     
     var canSubmit: Bool {
-        selectedUserId != nil
+        selectedUser != nil
     }
     
     func submitAnswer() {
-        guard let userId = selectedUserId else { return }
-        onSubmit(userId)
+        guard let selectedUser else { return }
+        onSubmit(selectedUser)
     }
 }
