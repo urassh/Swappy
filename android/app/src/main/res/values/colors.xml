@@ -23,7 +23,7 @@
     <color name="shadow_blue">#803966FF</color>
     <color name="waiting_panel">#7A7F8A</color>
     <color name="waiting_item">#8A909A</color>
-    <color name="waiting_avatar">#5B606A</color>
+    <color name="waiting_avatar">#6E737D</color>
     <color name="ready_green">#4CD26A</color>
     <color name="muted_red">#F35B5B</color>
 </resources>

@@ -204,7 +204,7 @@
             android:textAlignment="center"
             android:text="@string/waiting_room_name"
             android:textColor="@color/white"
-            android:textSize="22sp"
+            android:textSize="28sp"
             android:textStyle="bold" />
 
         <TextView
@@ -216,13 +216,13 @@
             android:textAlignment="center"
             android:text="@string/waiting_room_subtitle"
             android:textColor="@color/white_70"
-            android:textSize="13sp" />
+            android:textSize="20sp" />
 
         <LinearLayout
             android:id="@+id/waiting_member_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="60dp"
             android:orientation="vertical">
 
                 <LinearLayout
@@ -235,17 +235,17 @@
                     android:paddingHorizontal="14dp">
 
                     <FrameLayout
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
                         android:background="@drawable/waiting_avatar_bg"
-                        android:padding="9dp">
+                        android:padding="16dp">
 
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:contentDescription="@null"
                             android:importantForAccessibility="no"
-                            android:src="@android:drawable/ic_menu_myplaces"
+                            android:src="@drawable/swappy_member_icon"
                             android:tint="@color/white_70" />
                     </FrameLayout>
 
@@ -301,17 +301,17 @@
                     android:paddingHorizontal="14dp">
 
                     <FrameLayout
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
                         android:background="@drawable/waiting_avatar_bg"
-                        android:padding="9dp">
+                        android:padding="16dp">
 
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:contentDescription="@null"
                             android:importantForAccessibility="no"
-                            android:src="@android:drawable/ic_menu_myplaces"
+                            android:src="@drawable/swappy_member_icon"
                             android:tint="@color/white_70" />
                     </FrameLayout>
 
@@ -367,17 +367,17 @@
                     android:paddingHorizontal="14dp">
 
                     <FrameLayout
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
                         android:background="@drawable/waiting_avatar_bg"
-                        android:padding="9dp">
+                        android:padding="16dp">
 
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:contentDescription="@null"
                             android:importantForAccessibility="no"
-                            android:src="@android:drawable/ic_menu_myplaces"
+                            android:src="@drawable/swappy_member_icon"
                             android:tint="@color/white_70" />
                     </FrameLayout>
 
@@ -433,17 +433,17 @@
                     android:paddingHorizontal="14dp">
 
                     <FrameLayout
-                        android:layout_width="60dp"
-                        android:layout_height="60dp"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
                         android:background="@drawable/waiting_avatar_bg"
-                        android:padding="9dp">
+                        android:padding="16dp">
 
                         <ImageView
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:contentDescription="@null"
                             android:importantForAccessibility="no"
-                            android:src="@android:drawable/ic_menu_myplaces"
+                            android:src="@drawable/swappy_member_icon"
                             android:tint="@color/white_70" />
                     </FrameLayout>
 
@@ -494,17 +494,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:layout_marginBottom="-24dp"
             android:gravity="center"
             android:orientation="horizontal">
 
             <FrameLayout
-                android:layout_width="80dp"
-                android:layout_height="80dp">
+                android:layout_width="120dp"
+                android:layout_height="120dp">
 
                 <ImageView
                     android:id="@+id/waiting_camera_toggle"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
                     android:contentDescription="@null"
                     android:importantForAccessibility="no"
                     android:clickable="true"
@@ -514,14 +515,14 @@
             </FrameLayout>
 
             <FrameLayout
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:layout_marginStart="18dp">
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:layout_marginStart="2dp">
 
                 <ImageView
                     android:id="@+id/waiting_mic_toggle"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
                     android:contentDescription="@null"
                     android:importantForAccessibility="no"
                     android:clickable="true"
