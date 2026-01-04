@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Xcode
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserdatad/
+*.swp
+*.moved-aside
+*.xcuserstate
+
+# SwiftPM
+.build/
+
+# Android (if unused locally)
+**/build/
+
