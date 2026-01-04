@@ -32,8 +32,8 @@ struct RobbyView: View {
             // 背景
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.purple.opacity(0.8),
-                    Color.blue.opacity(0.6)
+                    Color(red: 0.35, green: 0.37, blue: 0.41),
+                    Color(red: 0.55, green: 0.58, blue: 0.64)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -44,12 +44,12 @@ struct RobbyView: View {
                 // ヘッダー
                 VStack(spacing: 10) {
                     Text("村の集会所")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
+                        .font(.system(size: 26, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.9))
                     
                     Text("村: \(viewModel.users.first?.name ?? "Unknown")")
                         .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(.white.opacity(0.7))
                 }
                 .padding(.top, 50)
                 
@@ -60,8 +60,8 @@ struct RobbyView: View {
                             HStack(spacing: 15) {
                                 // アバター
                                 Circle()
-                                    .fill(Color.white.opacity(0.3))
-                                    .frame(width: 50, height: 50)
+                                    .fill(Color.white.opacity(0.22))
+                                    .frame(width: 44, height: 44)
                                     .overlay(
                                         Image(systemName: "person.fill")
                                             .foregroundColor(.white)
@@ -70,7 +70,7 @@ struct RobbyView: View {
                                 // 名前
                                 Text(user.name)
                                     .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(.white.opacity(0.9))
                                 
                                 Spacer()
                                 
@@ -78,24 +78,30 @@ struct RobbyView: View {
                                 if user.isReady {
                                     HStack(spacing: 5) {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.green)
+                                            .foregroundColor(Color(red: 0.2, green: 0.9, blue: 0.6))
                                         Text("準備完了")
                                             .font(.system(size: 14))
-                                            .foregroundColor(.white)
+                                            .foregroundColor(.white.opacity(0.85))
                                     }
                                 } else {
                                     Text("待機中...")
                                         .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.6))
+                                        .foregroundColor(.white.opacity(0.55))
                                 }
                                 
                                 // マイク状態
                                 Image(systemName: user.isMuted ? "mic.slash.fill" : "mic.fill")
-                                    .foregroundColor(.white.opacity(0.8))
+                                    .foregroundColor(user.isMuted ? Color.white.opacity(0.5) : Color(red: 0.2, green: 0.9, blue: 0.6))
                             }
                             .padding()
-                            .background(Color.white.opacity(0.15))
-                            .cornerRadius(15)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .fill(.ultraThinMaterial)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                            )
                         }
                     }
                     .padding(.horizontal, 20)
@@ -115,11 +121,17 @@ struct RobbyView: View {
                             Text(viewModel.isMicMuted ? "マイクオフ" : "マイクオン")
                                 .font(.system(size: 16, weight: .medium))
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(.white.opacity(0.9))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(viewModel.isMicMuted ? Color.red.opacity(0.7) : Color.white.opacity(0.2))
-                        .cornerRadius(15)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                                )
+                        )
                     }
                     .padding(.horizontal, 30)
 
@@ -129,8 +141,10 @@ struct RobbyView: View {
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.8))
                             .padding()
-                            .background(Color.orange.opacity(0.3))
-                            .cornerRadius(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color.orange.opacity(0.25))
+                            )
                     }
                     
                     // ゲーム開始ボタン
@@ -143,11 +157,29 @@ struct RobbyView: View {
                             Text("ゲーム開始")
                                 .font(.system(size: 18, weight: .bold))
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(.white.opacity(0.95))
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(viewModel.canStartGame ? Color.green.opacity(0.8) : Color.gray.opacity(0.5))
-                        .cornerRadius(15)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: viewModel.canStartGame ? [
+                                            Color(red: 0.15, green: 0.8, blue: 0.55),
+                                            Color(red: 0.1, green: 0.6, blue: 0.85)
+                                        ] : [
+                                            Color.white.opacity(0.25),
+                                            Color.white.opacity(0.15)
+                                        ]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                        .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                                )
+                        )
                     }
                     .disabled(!viewModel.canStartGame)
                     .padding(.horizontal, 30)
