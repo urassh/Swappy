@@ -98,42 +98,110 @@ struct RobbyView: View {
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                                     .fill(.ultraThinMaterial)
                                     .overlay(
+                                        LinearGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.white.opacity(0.22),
+                                                Color.white.opacity(0.05),
+                                                Color.white.opacity(0.11)
+                                            ]),
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                    )
+                                    .overlay(
                                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                            .stroke(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        Color.white.opacity(0.25),
+                                                        Color.white.opacity(0.08)
+                                                    ]),
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                            .fill(
+                                                LinearGradient(
+                                                    gradient: Gradient(colors: [
+                                                        Color.white.opacity(0.06),
+                                                        Color.white.opacity(0.0)
+                                                    ]),
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
+                                            .blendMode(.screen)
+                                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                                     )
                             )
+                            .shadow(color: Color.white.opacity(0.04), radius: 8, x: 0, y: 5)
                         }
                     }
                     .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
                 }
                 
                 Spacer()
                 
                 // コントロール
                 VStack(spacing: 20) {
-                    // マイクボタン
-                    Button(action: {
-                        viewModel.toggleMic()
-                    }) {
-                        HStack {
-                            Image(systemName: viewModel.isMicMuted ? "mic.slash.fill" : "mic.fill")
-                                .font(.system(size: 20))
-                            Text(viewModel.isMicMuted ? "マイクオフ" : "マイクオン")
-                                .font(.system(size: 16, weight: .medium))
+                    HStack(spacing: 24) {
+                        Button(action: {
+                            viewModel.startGame()
+                        }) {
+                            ZStack {
+                                Image("IconRing")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 80, height: 80)
+                                    .offset(y: 6)
+                                Image("VideoIcon")
+                                    .resizable()
+                                    .renderingMode(.original)
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 20)
+                                if !viewModel.canStartGame {
+                                    Image("VideoIconSlash")
+                                        .resizable()
+                                        .renderingMode(.original)
+                                        .scaledToFit()
+                                        .frame(width: 36, height: 36)
+                                }
+                            }
                         }
-                        .foregroundColor(.white.opacity(0.9))
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                                )
-                        )
+                        .disabled(!viewModel.canStartGame)
+                        .opacity(viewModel.canStartGame ? 1.0 : 0.6)
+                        
+                        Button(action: {
+                            viewModel.toggleMic()
+                        }) {
+                            ZStack {
+                                Image("IconRing")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 80, height: 80)
+                                    .offset(y: 6)
+                                Image("MicIcon")
+                                    .resizable()
+                                    .renderingMode(.original)
+                                    .scaledToFit()
+                                    .frame(width: 20, height: 28)
+                                if viewModel.isMicMuted {
+                                    Image("IconSlash")
+                                        .resizable()
+                                        .renderingMode(.original)
+                                        .scaledToFit()
+                                        .frame(width: 36, height: 36)
+                                }
+                            }
+                        }
+                        .opacity(viewModel.isMicMuted ? 0.6 : 1.0)
                     }
-                    .padding(.horizontal, 30)
 
                     // ゲーム開始できない理由の表示
                     if let reason = viewModel.startGameDisabledReason {
