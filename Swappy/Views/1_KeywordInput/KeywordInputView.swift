@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct KeywordInputView: View {
-    @Bindable private var viewModel: KeywordInputViewModel
+    @State private var viewModel: KeywordInputViewModel
     
-    init(viewModel: KeywordInputViewModel) {
-        self.viewModel = viewModel
+    init(onEnterRoom: @escaping (String, String) -> Void) {
+        _viewModel = State(initialValue: KeywordInputViewModel(onEnterRoom: onEnterRoom))
     }
     
     var body: some View {
+        @Bindable var viewModel = viewModel
+
         ZStack {
             Image("Background")
                 .resizable()
@@ -227,6 +229,6 @@ extension View {
 
 #Preview {
     KeywordInputView(
-        viewModel: KeywordInputViewModel(onEnterRoom: { _, _ in })
+        onEnterRoom: { _, _ in }
     )
 }
