@@ -111,8 +111,12 @@ extension GameCoordinator {
     }
     
     func leaveRoom() {
-        agoraManager?.leaveChannel()
-        gameRepository.leaveRoom(me: self.me!)
+        guard let me = me else { return }
+        cleanupAgoraManager()
+        gameRepository.leaveRoom(me: me)
+        users = []
+        allAnswers = []
+        self.me = nil
     }
     
     /// 準備状態を完了状態にする

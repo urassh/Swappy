@@ -10,13 +10,15 @@ import Combine
 
 struct RobbyView: View {
     @State private var viewModel: RobbyViewModel
+    private let onBack: () -> Void
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
         me: User,
         onMuteMic: @escaping () -> Void,
         onUnmuteMic: @escaping () -> Void,
-        onStartGame: @escaping () -> Void
+        onStartGame: @escaping () -> Void,
+        onBack: @escaping () -> Void
     ) {
         self.viewModel = RobbyViewModel(
             usersPublisher: usersPublisher,
@@ -25,6 +27,7 @@ struct RobbyView: View {
             onUnmuteMic: onUnmuteMic,
             onStartGame: onStartGame
         )
+        self.onBack = onBack
     }
     
     var body: some View {
@@ -42,14 +45,31 @@ struct RobbyView: View {
             
             VStack(spacing: 30) {
                 // ヘッダー
-                VStack(spacing: 10) {
-                    Text("村の集会所")
-                        .font(.system(size: 26, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.9))
+                ZStack {
+                    HStack {
+                        Button(action: {
+                            onBack()
+                        }) {
+                            Image("BackArrow")
+                                .resizable()
+                                .renderingMode(.original)
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                        }
+                        .padding(.leading, 20)
+                        
+                        Spacer()
+                    }
                     
-                    Text("村: \(viewModel.users.first?.name ?? "Unknown")")
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.7))
+                    VStack(spacing: 10) {
+                        Text("村の集会所")
+                            .font(.system(size: 26, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.9))
+                        
+                        Text("村: \(viewModel.users.first?.name ?? "Unknown")")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
                 }
                 .padding(.top, 50)
                 
@@ -143,13 +163,10 @@ struct RobbyView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 2)
                 }
-                
-                Spacer()
-                
                 // コントロール
-                VStack(spacing: 20) {
+                VStack(spacing: 4) {
                     HStack(spacing: 24) {
                         Button(action: {
                             viewModel.startGame()
@@ -158,19 +175,19 @@ struct RobbyView: View {
                                 Image("IconRing")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 80, height: 80)
-                                    .offset(y: 6)
+                                    .frame(width: 100, height: 100)
+                                    .offset(y: 8)
                                 Image("VideoIcon")
                                     .resizable()
                                     .renderingMode(.original)
                                     .scaledToFit()
-                                    .frame(width: 24, height: 20)
+                                    .frame(width: 30, height: 25)
                                 if !viewModel.canStartGame {
                                     Image("VideoIconSlash")
                                         .resizable()
                                         .renderingMode(.original)
                                         .scaledToFit()
-                                        .frame(width: 36, height: 36)
+                                        .frame(width: 45, height: 45)
                                 }
                             }
                         }
@@ -184,19 +201,19 @@ struct RobbyView: View {
                                 Image("IconRing")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 80, height: 80)
-                                    .offset(y: 6)
+                                    .frame(width: 100, height: 100)
+                                    .offset(y: 8)
                                 Image("MicIcon")
                                     .resizable()
                                     .renderingMode(.original)
                                     .scaledToFit()
-                                    .frame(width: 20, height: 28)
+                                    .frame(width: 25, height: 35)
                                 if viewModel.isMicMuted {
                                     Image("IconSlash")
                                         .resizable()
                                         .renderingMode(.original)
                                         .scaledToFit()
-                                        .frame(width: 36, height: 36)
+                                        .frame(width: 45, height: 45)
                                 }
                             }
                         }
@@ -213,8 +230,9 @@ struct RobbyView: View {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .fill(Color.orange.opacity(0.25))
                             )
+                            .padding(.bottom, 8)
                     }
-                    
+
                     // ゲーム開始ボタン
                     Button(action: {
                         viewModel.startGame()
@@ -244,15 +262,39 @@ struct RobbyView: View {
                                     )
                                 )
                                 .overlay(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.white.opacity(0.45),
+                                            Color.white.opacity(0.08),
+                                            Color.white.opacity(0.2)
+                                        ]),
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                )
+                                .overlay(
                                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .stroke(Color.white.opacity(0.35), lineWidth: 1)
+                                        .stroke(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [
+                                                    Color.white.opacity(0.5),
+                                                    Color.white.opacity(0.2)
+                                                ]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
                                 )
                         )
+                        .shadow(color: Color(red: 0.0, green: 0.78, blue: 0.37).opacity(viewModel.canStartGame ? 0.35 : 0.0), radius: 12, x: 0, y: 8)
+                        .shadow(color: Color(red: 0.0, green: 0.78, blue: 0.37).opacity(viewModel.canStartGame ? 0.18 : 0.0), radius: 20, x: 0, y: 12)
                     }
                     .disabled(!viewModel.canStartGame)
                     .padding(.horizontal, 30)
                 }
-                .padding(.bottom, 40)
+                .padding(.bottom, 16)
             }
         }
     }
@@ -272,6 +314,7 @@ struct RobbyView: View {
         me: me,
         onMuteMic: {},
         onUnmuteMic: {},
-        onStartGame: {}
+        onStartGame: {},
+        onBack: {}
     )
 }

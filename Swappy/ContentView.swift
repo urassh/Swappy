@@ -32,6 +32,10 @@ struct ContentView: View {
                     },
                     onStartGame: {
                         coordinator.startGame()
+                    },
+                    onBack: {
+                        coordinator.leaveRoom()
+                        coordinator.navigate(to: .keywordInput)
                     }
                 )
                 
