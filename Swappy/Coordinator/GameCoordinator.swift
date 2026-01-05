@@ -53,6 +53,8 @@ class GameCoordinator {
 
     let gameRepository: GameRepositoryProtocol
     private(set) var agoraManager: AgoraManager?
+    private var hasJoinedChannel: Bool = false
+    private var didSendReady: Bool = false
     
     
     private let appId = "test-mode"
@@ -117,20 +119,22 @@ extension GameCoordinator {
         users = []
         allAnswers = []
         self.me = nil
+        hasJoinedChannel = false
+        didSendReady = false
     }
     
     /// 準備状態を完了状態にする
     private func completeCallReady() {
-        // 楽観的更新: まず自分の状態を更新
-        self.me!.isReady = true
-        
-        // users内の自分も更新
-        if let index = users.firstIndex(where: { $0.id == self.me!.id }) {
-            users[index].isReady = true
-        }
-        
-        // Repositoryに送信（イベントハンドラで最終的な状態を受け取る）
-        gameRepository.completeCallReady(me: self.me!)
+        guard let me = self.me else { return }
+        // Repositoryに送信（イベントハンドラで状態を受け取る）
+        gameRepository.completeCallReady(me: me)
+    }
+
+    private func trySendReadyIfPossible() {
+        guard !didSendReady, hasJoinedChannel, let me = me else { return }
+        guard users.contains(where: { $0.id == me.id }) else { return }
+        didSendReady = true
+        completeCallReady()
     }
     
     /// ミュート状態をトグル
@@ -236,9 +240,8 @@ extension GameCoordinator {
     private func handleUserJoined(_ user: User) {
         if !users.contains(where: { $0.id == user.id }) {
             users.append(user)
-            if user.id == me?.id, me?.isReady == true, let index = users.firstIndex(where: { $0.id == user.id }) {
-                users[index].isReady = true
-                usersSubject.send(users)
+            if user.id == me?.id {
+                trySendReadyIfPossible()
             }
         }
     }
@@ -295,7 +298,8 @@ extension GameCoordinator {
 extension GameCoordinator: ChannelEventDelegate {
     func didJoinChannel(uid: UInt) {
         print("✅ Successfully joined Agora channel with uid: \(uid)")
-        completeCallReady()
+        hasJoinedChannel = true
+        trySendReadyIfPossible()
     }
     
     func didUserJoin(uid: UInt) {
