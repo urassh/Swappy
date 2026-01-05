@@ -24,6 +24,8 @@ class MockGameRepository: GameRepositoryProtocol {
     private var onError: ((String) -> Void)?
 
     private var currentKeyword: String = ""
+    private var joinTask: Task<Void, Never>?
+    private var pendingReadyUserIDs = Set<UUID>()
     private static var rooms: [String: [User]] = [:]  // keyword -> users
     
     // MARK: - Computed Properties
@@ -119,17 +121,25 @@ class MockGameRepository: GameRepositoryProtocol {
     
     /// ルーム参加のシミュレーション（自分 + 他のユーザー）
     private func simulateJoinRoom(me: User) {
-        Task {
+        joinTask?.cancel()
+        joinTask = Task {
             // 通信時間をシミュレート（0.5秒）
             try? await Task.sleep(nanoseconds: 500_000_000)
+            guard !Task.isCancelled else { return }
             
             await MainActor.run {
-                self.users.append(me)
-                self.onUserJoined?(me)
+                var joiningUser = me
+                if self.pendingReadyUserIDs.contains(me.id) {
+                    joiningUser.isReady = true
+                    self.pendingReadyUserIDs.remove(me.id)
+                }
+                self.users.append(joiningUser)
+                self.onUserJoined?(joiningUser)
             }
             
             // 他のユーザーの参加（3秒後）
             try? await Task.sleep(nanoseconds: 2_500_000_000) // 残り2.5秒
+            guard !Task.isCancelled else { return }
             
             let mockUsers = [
                 User(name: "太郎", isReady: true),
@@ -138,6 +148,7 @@ class MockGameRepository: GameRepositoryProtocol {
             ]
             
             for user in mockUsers {
+                guard !Task.isCancelled else { return }
                 await MainActor.run {
                     self.users.append(user)
                     self.onUserJoined?(user)
@@ -152,11 +163,15 @@ class MockGameRepository: GameRepositoryProtocol {
             try? await Task.sleep(nanoseconds: 300_000_000) // 0.3秒
             
             await MainActor.run {
-                if !self.currentKeyword.isEmpty {
-                    self.currentKeyword = ""
-                    Self.rooms[self.currentKeyword] = nil
-                    self.onUserLeft?(me)
+                let keyword = self.currentKeyword
+                self.currentKeyword = ""
+                self.joinTask?.cancel()
+                self.joinTask = nil
+                self.pendingReadyUserIDs.removeAll()
+                if !keyword.isEmpty {
+                    Self.rooms[keyword] = nil
                 }
+                self.onUserLeft?(me)
             }
         }
     }
@@ -171,6 +186,8 @@ class MockGameRepository: GameRepositoryProtocol {
                 if let index = self.users.firstIndex(where: { $0.id == me.id }) {
                     self.users[index].isReady = true
                     self.onUserReadyStateChanged?(self.users[index], true)
+                } else {
+                    self.pendingReadyUserIDs.insert(me.id)
                 }
             }
         }
