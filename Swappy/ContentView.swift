@@ -8,16 +8,25 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var coordinator = GameCoordinator(gameRepository: MockGameRepository())
+    @State private var coordinator: GameCoordinator
+    @State private var keywordInputViewModel: KeywordInputViewModel
+
+    init() {
+        let coordinator = GameCoordinator(gameRepository: MockGameRepository())
+        _coordinator = State(initialValue: coordinator)
+        _keywordInputViewModel = State(
+            initialValue: KeywordInputViewModel(onEnterRoom: { keyword, userName in
+                coordinator.joinRoom(keyword: keyword, userName: userName)
+            })
+        )
+    }
     
     var body: some View {
         ZStack {
             switch coordinator.currentScreen {
             case .keywordInput:
                 KeywordInputView(
-                    onEnterRoom: { keyword, userName in
-                        coordinator.joinRoom(keyword: keyword, userName: userName)
-                    }
+                    viewModel: keywordInputViewModel
                 )
 
             case .robby:

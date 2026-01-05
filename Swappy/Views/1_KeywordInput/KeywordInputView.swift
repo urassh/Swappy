@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct KeywordInputView: View {
-    @State private var viewModel: KeywordInputViewModel
+    @Bindable private var viewModel: KeywordInputViewModel
     
-    init(onEnterRoom: @escaping (String, String) -> Void) {
-        self.viewModel = KeywordInputViewModel(onEnterRoom: onEnterRoom)
+    init(viewModel: KeywordInputViewModel) {
+        self.viewModel = viewModel
     }
     
     var body: some View {
@@ -227,6 +227,6 @@ extension View {
 
 #Preview {
     KeywordInputView(
-        onEnterRoom: { _, _ in }
+        viewModel: KeywordInputViewModel(onEnterRoom: { _, _ in })
     )
 }
