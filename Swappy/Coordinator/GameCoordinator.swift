@@ -236,6 +236,10 @@ extension GameCoordinator {
     private func handleUserJoined(_ user: User) {
         if !users.contains(where: { $0.id == user.id }) {
             users.append(user)
+            if user.id == me?.id, me?.isReady == true, let index = users.firstIndex(where: { $0.id == user.id }) {
+                users[index].isReady = true
+                usersSubject.send(users)
+            }
         }
     }
     
