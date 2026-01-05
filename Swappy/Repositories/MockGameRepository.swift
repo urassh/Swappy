@@ -25,7 +25,6 @@ class MockGameRepository: GameRepositoryProtocol {
 
     private var currentKeyword: String = ""
     private var joinTask: Task<Void, Never>?
-    private var pendingReadyUserIDs = Set<UUID>()
     private static var rooms: [String: [User]] = [:]  // keyword -> users
     
     // MARK: - Computed Properties
@@ -128,13 +127,8 @@ class MockGameRepository: GameRepositoryProtocol {
             guard !Task.isCancelled else { return }
             
             await MainActor.run {
-                var joiningUser = me
-                if self.pendingReadyUserIDs.contains(me.id) {
-                    joiningUser.isReady = true
-                    self.pendingReadyUserIDs.remove(me.id)
-                }
-                self.users.append(joiningUser)
-                self.onUserJoined?(joiningUser)
+                self.users.append(me)
+                self.onUserJoined?(me)
             }
             
             // 他のユーザーの参加（3秒後）
@@ -167,7 +161,6 @@ class MockGameRepository: GameRepositoryProtocol {
                 self.currentKeyword = ""
                 self.joinTask?.cancel()
                 self.joinTask = nil
-                self.pendingReadyUserIDs.removeAll()
                 if !keyword.isEmpty {
                     Self.rooms[keyword] = nil
                 }
@@ -186,8 +179,6 @@ class MockGameRepository: GameRepositoryProtocol {
                 if let index = self.users.firstIndex(where: { $0.id == me.id }) {
                     self.users[index].isReady = true
                     self.onUserReadyStateChanged?(self.users[index], true)
-                } else {
-                    self.pendingReadyUserIDs.insert(me.id)
                 }
             }
         }
