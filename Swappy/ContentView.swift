@@ -64,6 +64,10 @@ struct ContentView: View {
                     usersPublisher: coordinator.usersPublisher,
                     onTimeUp: {
                         coordinator.startAnswerInput()
+                    },
+                    onBack: {
+                        coordinator.leaveRoom()
+                        coordinator.navigate(to: .keywordInput)
                     }
                 )
                 
