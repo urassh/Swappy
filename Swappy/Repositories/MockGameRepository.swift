@@ -14,10 +14,8 @@ class MockGameRepository: GameRepositoryProtocol {
     // MARK: - Properties
     
     // イベントハンドラ
-    private var onUserJoined: ((User) -> Void)?
+    private var onUsersChanged: (([User]) -> Void)?
     private var onUserLeft: ((User) -> Void)?
-    private var onUserReadyStateChanged: ((User, Bool) -> Void)?
-    private var onUserMuteStateChanged: ((User, Bool) -> Void)?
     private var onGameStarted: (() -> Void)?
     private var onRolesAssigned: (([User]) -> Void)?
     private var onAnswerSubmitted: ((PlayerAnswer) -> Void)?
@@ -37,19 +35,15 @@ class MockGameRepository: GameRepositoryProtocol {
     // MARK: - GameRepositoryProtocol
     
     func setEventHandlers(
-        onUserJoined: @escaping (User) -> Void,
+        onUsersChanged: @escaping ([User]) -> Void,
         onUserLeft: @escaping (User) -> Void,
-        onUserReadyStateChanged: @escaping (User, Bool) -> Void,
-        onUserMuteStateChanged: @escaping (User, Bool) -> Void,
         onGameStarted: @escaping () -> Void,
         onRolesAssigned: @escaping ([User]) -> Void,
         onAnswerSubmitted: @escaping (PlayerAnswer) -> Void,
         onError: @escaping (String) -> Void
     ) {
-        self.onUserJoined = onUserJoined
+        self.onUsersChanged = onUsersChanged
         self.onUserLeft = onUserLeft
-        self.onUserReadyStateChanged = onUserReadyStateChanged
-        self.onUserMuteStateChanged = onUserMuteStateChanged
         self.onGameStarted = onGameStarted
         self.onRolesAssigned = onRolesAssigned
         self.onAnswerSubmitted = onAnswerSubmitted
@@ -85,10 +79,10 @@ class MockGameRepository: GameRepositoryProtocol {
             try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
             
             await MainActor.run {
-                guard let index = self.users.indices.first else { return }
+                guard let index = self.users.firstIndex(where: { $0.id == me.id }) else { return }
                 
                 self.users[index].isMuted = isMuted
-                self.onUserMuteStateChanged?(self.users[index], isMuted)
+                self.onUsersChanged?(self.users)
             }
         }
     }
@@ -128,7 +122,8 @@ class MockGameRepository: GameRepositoryProtocol {
             
             await MainActor.run {
                 self.users.append(me)
-                self.onUserJoined?(me)
+                // 自分が参加した時点での全ユーザーを通知
+                self.onUsersChanged?(self.users)
             }
             
             // 他のユーザーの参加（3秒後）
@@ -145,7 +140,8 @@ class MockGameRepository: GameRepositoryProtocol {
                 guard !Task.isCancelled else { return }
                 await MainActor.run {
                     self.users.append(user)
-                    self.onUserJoined?(user)
+                    // 新しいユーザーが参加するたびに全ユーザーを通知
+                    self.onUsersChanged?(self.users)
                 }
             }
         }
@@ -178,7 +174,7 @@ class MockGameRepository: GameRepositoryProtocol {
                 // 自分の準備状態を更新
                 if let index = self.users.firstIndex(where: { $0.id == me.id }) {
                     self.users[index].isReady = true
-                    self.onUserReadyStateChanged?(self.users[index], true)
+                    self.onUsersChanged?(self.users)
                 }
             }
         }

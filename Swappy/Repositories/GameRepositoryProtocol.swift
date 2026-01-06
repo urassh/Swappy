@@ -12,10 +12,8 @@ import Combine
 protocol GameRepositoryProtocol {
     /// イベントハンドラを設定
     func setEventHandlers(
-        onUserJoined: @escaping (User) -> Void,                      // ユーザ(自分含む)がチャンネルに参加した時(Userモデルとして取得できる)
+        onUsersChanged: @escaping ([User]) -> Void,                  // ユーザーリストが変更された時（参加、準備状態変更、ミュート状態変更）
         onUserLeft: @escaping (User) -> Void,                        // ユーザ(自分含む)がチャンネルから離脱された時
-        onUserReadyStateChanged: @escaping (User, Bool) -> Void,     // ユーザ(自分含む)がAgoraやAkoolの接続準備状態が更新された時
-        onUserMuteStateChanged: @escaping (User, Bool) -> Void,      // ユーザ(自分含む)がミュート状態を更新された時
         onGameStarted: @escaping () -> Void,                         // ゲームが開始された時
         onRolesAssigned: @escaping ([User]) -> Void,                 // 各ユーザにロールがアサインされた時（[User]）
         onAnswerSubmitted: @escaping (PlayerAnswer) -> Void,         // ユーザが回答を送信した時（個別）
