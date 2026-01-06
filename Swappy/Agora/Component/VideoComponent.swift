@@ -6,6 +6,7 @@
 //
 
 import AgoraRtcKit
+import UIKit
 
 // MARK: - Video Component
 
@@ -21,7 +22,15 @@ class VideoComponent: AgoraComponent {
     
     func setup() {
         engineKit.enableVideo()
-        // 将来的にビデオ設定を追加
+        engineKit.setVideoEncoderConfiguration(
+            AgoraVideoEncoderConfiguration(
+                size: CGSize(width: 640, height: 480),
+                frameRate: .fps15,
+                bitrate: AgoraVideoBitrateStandard,
+                orientationMode: .adaptative,
+                mirrorMode: .auto
+            )
+        )
     }
     
     func teardown() {
@@ -34,5 +43,29 @@ class VideoComponent: AgoraComponent {
     
     func disableCamera() {
         engineKit.enableLocalVideo(false)
+    }
+    
+    /// ローカルビデオのビューを取得
+    func localVideo() -> UIView {
+        let videoCanvas = AgoraRtcVideoCanvas()
+        videoCanvas.uid = 0 // ローカルユーザーは0
+        videoCanvas.renderMode = .hidden
+        let view = UIView()
+        videoCanvas.view = view
+        engineKit.setupLocalVideo(videoCanvas)
+        return view
+    }
+    
+    /// リモートビデオのビューを取得
+    /// - Parameter talkId: リモートユーザーのUID
+    /// - Returns: リモートビデオを表示するUIView
+    func remoteVideo(with talkId: UInt) -> UIView {
+        let videoCanvas = AgoraRtcVideoCanvas()
+        videoCanvas.uid = talkId
+        videoCanvas.renderMode = .hidden
+        let view = UIView()
+        videoCanvas.view = view
+        engineKit.setupRemoteVideo(videoCanvas)
+        return view
     }
 }
