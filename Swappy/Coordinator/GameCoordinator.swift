@@ -20,40 +20,44 @@ class GameCoordinator {
     
     // MARK: - Shared Data
     
+    /// 自分のユーザーID
+    private(set) var meId: UUID?
+    
+    /// 自分のユーザー情報（computed property）
+    var me: User? {
+        guard let meId = meId else { return nil }
+        return users.first(where: { $0.id == meId })
+    }
+    
+    var wolfUser: User? {
+        users.first(where: { $0.role == .werewolf })
+    }
+    
+    /// 全ユーザー（自分を含む）
     var users: [User] = [] {
         didSet {
             usersSubject.send(users)
         }
     }
-    
-    private let usersSubject = CurrentValueSubject<[User], Never>([])
-    var usersPublisher: AnyPublisher<[User], Never> {
-        usersSubject.eraseToAnyPublisher()
-    }
-    
     var allAnswers: [PlayerAnswer] = [] {
         didSet {
             allAnswersSubject.send(allAnswers)
-            // 全員の回答が揃ったらAnswerRevealに遷移
-            if allAnswers.count == users.count && currentScreen == .answerWaiting {
-                navigate(to: .answerReveal)
-            }
         }
     }
     
+    private let usersSubject = CurrentValueSubject<[User], Never>([])
     private let allAnswersSubject = CurrentValueSubject<[PlayerAnswer], Never>([])
+    
+    var usersPublisher: AnyPublisher<[User], Never> {
+        usersSubject.eraseToAnyPublisher()
+    }
     var allAnswersPublisher: AnyPublisher<[PlayerAnswer], Never> {
         allAnswersSubject.eraseToAnyPublisher()
-    }
-    
-    var me: User? = nil
-    var wolfUser: User? {
-        users.first(where: { $0.role == .werewolf })
     }
 
     let gameRepository: GameRepositoryProtocol
     private(set) var agoraManager: AgoraManager?
-    
+    private var didSendReady: Bool = false
     
     private let appId = "test-mode"
     
@@ -65,6 +69,21 @@ class GameCoordinator {
     
     func navigate(to screen: ScreenState) {
         currentScreen = screen
+    }
+    
+    /// GameCoordinatorの状態を完全にクリーン（Agora含む）
+    func clean() {
+        // Agoraをクリーンアップ
+        cleanupAgoraManager()
+        
+        // 状態をリセット
+        users = []
+        allAnswers = []
+        meId = nil
+        currentScreen = .keywordInput
+        didSendReady = false
+        
+        print("🧹 GameCoordinator cleaned")
     }
     
     // MARK: - Agora Management
@@ -91,7 +110,8 @@ extension GameCoordinator {
     func joinRoom(keyword: String, userName: String) {
         navigate(to: .robby)
         
-        self.me = User(name: userName)
+        let newUser = User(name: userName)
+        self.meId = newUser.id
         
         // Agora Managerをセットアップ
         setupAgoraManager()
@@ -107,30 +127,27 @@ extension GameCoordinator {
         }
         
         // GameRepositoryを通じてルームに参加
-        gameRepository.joinRoom(keyword: keyword, me: self.me!)
+        gameRepository.joinRoom(keyword: keyword, me: newUser)
     }
     
     func leaveRoom() {
-        agoraManager?.leaveChannel()
-        gameRepository.leaveRoom(me: self.me!)
+        guard let me = me else { return }
+        clean()
+        gameRepository.leaveRoom(me: me)
     }
     
     /// 準備状態を完了状態にする
     private func completeCallReady() {
-        // 楽観的更新: まず自分の状態を更新
-        self.me!.isReady = true
+        guard let me = self.me else { return }
         
-        // users内の自分も更新
-        if let index = users.firstIndex(where: { $0.id == self.me!.id }) {
-            users[index].isReady = true
-        }
-        
-        // Repositoryに送信（イベントハンドラで最終的な状態を受け取る）
-        gameRepository.completeCallReady(me: self.me!)
+        // Repositoryに送信（イベントハンドラで状態を受け取る）
+        gameRepository.completeCallReady(me: me)
     }
-    
+
     /// ミュート状態をトグル
     func toggleMute(isMuted: Bool) {
+        guard let me = me, let meId = meId else { return }
+        
         // Agoraのミュート状態を変更
         if isMuted {
             agoraManager?.audio?.mute()
@@ -138,16 +155,13 @@ extension GameCoordinator {
             agoraManager?.audio?.unmute()
         }
         
-        // 楽観的更新: まず自分の状態を更新
-        self.me!.isMuted = isMuted
-        
-        // users内の自分も更新
-        if let index = users.firstIndex(where: { $0.id == self.me!.id }) {
+        // 楽観的更新: users内の自分の状態を即座に更新（UX向上）
+        if let index = users.firstIndex(where: { $0.id == meId }) {
             users[index].isMuted = isMuted
         }
         
-        // Repositoryに送信（イベントハンドラで最終的な状態を受け取る）
-        gameRepository.toggleMute(me: self.me!, isMuted: isMuted)
+        // Repositoryに送信（handleUsersChangedで最終的な状態を受け取る）
+        gameRepository.toggleMute(me: me, isMuted: isMuted)
     }
     
     /// ゲームを開始
@@ -176,7 +190,6 @@ extension GameCoordinator {
     func resetGame() {
         gameRepository.resetGame()
     }
-    
 }
 
 // MARK: - Subscribe GameEvent(WebSocket)
@@ -184,24 +197,14 @@ extension GameCoordinator {
     // MARK: - Event Handlers Setup
     private func setupEventHandlers() {
         gameRepository.setEventHandlers(
-            onUserJoined: { [weak self] user in
+            onUsersChanged: { [weak self] users in
                 DispatchQueue.main.async {
-                    self?.handleUserJoined(user)
+                    self?.handleUsersChanged(users)
                 }
             },
             onUserLeft: { [weak self] user in
                 DispatchQueue.main.async {
                     self?.handleUserLeft(user)
-                }
-            },
-            onUserReadyStateChanged: { [weak self] user, isReady in
-                DispatchQueue.main.async {
-                    self?.handleUserReadyStateChanged(user: user, isReady: isReady)
-                }
-            },
-            onUserMuteStateChanged: { [weak self] user, isMuted in
-                DispatchQueue.main.async {
-                    self?.handleUserMuteStateChanged(user: user, isMuted: isMuted)
                 }
             },
             onGameStarted: { [weak self] in
@@ -229,30 +232,12 @@ extension GameCoordinator {
     
     // MARK: - Event Handlers
     
-    private func handleUserJoined(_ user: User) {
-        if !users.contains(where: { $0.id == user.id }) {
-            users.append(user)
-        }
+    private func handleUsersChanged(_ allUsers: [User]) {
+        users = allUsers
     }
     
     private func handleUserLeft(_ user: User) {
         users.removeAll { $0.id == user.id }
-    }
-    
-    private func handleUserReadyStateChanged(user: User, isReady: Bool) {
-        if let index = users.firstIndex(where: { $0.id == user.id }) {
-            users[index].isReady = isReady
-            // 配列の要素を直接変更したので、明示的に変更通知を送信
-            usersSubject.send(users)
-        }
-    }
-    
-    private func handleUserMuteStateChanged(user: User, isMuted: Bool) {
-        if let index = users.firstIndex(where: { $0.id == user.id }) {
-            users[index].isMuted = isMuted
-            // 配列の要素を直接変更したので、明示的に変更通知を送信
-            usersSubject.send(users)
-        }
     }
     
     private func handleGameStarted() {
@@ -265,7 +250,6 @@ extension GameCoordinator {
     private func handleRolesAssigned(users: [User]) {
         // 各ユーザーにロールを割り当て
         self.users = users
-        self.me = users.first(where: { $0.id == me?.id })!
         navigate(to: .roleReveal)
     }
     
@@ -273,6 +257,11 @@ extension GameCoordinator {
         // 重複チェック（同じユーザーの回答は一度だけ）
         if !allAnswers.contains(where: { $0.answer.id == answer.answer.id }) {
             allAnswers.append(answer)
+        }
+        
+        // 全員の回答が揃ったらAnswerRevealに遷移
+        if allAnswers.count == users.count && currentScreen == .answerWaiting {
+            navigate(to: .answerReveal)
         }
     }
     

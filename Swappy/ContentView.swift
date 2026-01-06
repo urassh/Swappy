@@ -8,7 +8,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var coordinator = GameCoordinator(gameRepository: MockGameRepository())
+    @State private var coordinator: GameCoordinator
+
+    init() {
+        let coordinator = GameCoordinator(gameRepository: MockGameRepository())
+        _coordinator = State(initialValue: coordinator)
+    }
     
     var body: some View {
         ZStack {
@@ -32,6 +37,10 @@ struct ContentView: View {
                     },
                     onStartGame: {
                         coordinator.startGame()
+                    },
+                    onBack: {
+                        coordinator.leaveRoom()
+                        coordinator.navigate(to: .keywordInput)
                     }
                 )
                 
@@ -51,6 +60,10 @@ struct ContentView: View {
                     usersPublisher: coordinator.usersPublisher,
                     onTimeUp: {
                         coordinator.startAnswerInput()
+                    },
+                    onBack: {
+                        coordinator.leaveRoom()
+                        coordinator.navigate(to: .keywordInput)
                     }
                 )
                 
