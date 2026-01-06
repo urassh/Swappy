@@ -14,11 +14,13 @@ struct VideoCallView: View {
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
+        videoViews: [UUID: UIView],
         onTimeUp: @escaping () -> Void,
         onBack: (() -> Void)? = nil
     ) {
         self.viewModel = VideoCallViewModel(
             usersPublisher: usersPublisher,
+            videoViews: videoViews,
             onTimeUp: onTimeUp
         )
         self.onBack = onBack
@@ -287,6 +289,7 @@ struct VideoTileView: View {
 #Preview {
     VideoCallView(
         usersPublisher: PreviewData.usersPublisher,
+        videoViews: [:],
         onTimeUp: {},
         onBack: {}
     )

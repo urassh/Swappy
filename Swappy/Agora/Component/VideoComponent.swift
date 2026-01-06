@@ -10,14 +10,12 @@ import UIKit
 
 // MARK: - Video Component
 
-/// ビデオ管理Component（将来の拡張用）
+/// ビデオ管理Component
 class VideoComponent: AgoraComponent {
     let engineKit: AgoraRtcEngineKit
-    weak var delegate: VideoEventDelegate?
     
-    init(engineKit: AgoraRtcEngineKit, delegate: VideoEventDelegate?) {
+    init(engineKit: AgoraRtcEngineKit) {
         self.engineKit = engineKit
-        self.delegate = delegate
     }
     
     func setup() {

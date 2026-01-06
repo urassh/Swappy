@@ -20,7 +20,7 @@ class AgoraManagerBuilder {
     private var audioConfig: AudioConfig?
     private var audioDelegate: AudioEventDelegate?
     
-    private var videoDelegate: VideoEventDelegate?
+    private var enableVideo: Bool = false
     private var channelDelegate: ChannelEventDelegate?
     
     init(appId: String, tokenRepository: AgoraTokenRepositoryProtocol) {
@@ -38,8 +38,8 @@ class AgoraManagerBuilder {
     
     /// ビデオ機能を追加
     @discardableResult
-    func withVideo(delegate: VideoEventDelegate?) -> Self {
-        self.videoDelegate = delegate
+    func withVideo() -> Self {
+        self.enableVideo = true
         return self
     }
     
@@ -75,10 +75,9 @@ class AgoraManagerBuilder {
         }
         
         var videoComponent: VideoComponent?
-        if videoDelegate != nil {
+        if enableVideo {
             videoComponent = VideoComponent(
-                engineKit: engineKit,
-                delegate: videoDelegate
+                engineKit: engineKit
             )
         }
         

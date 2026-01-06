@@ -94,6 +94,7 @@ class GameCoordinator {
         let builder = AgoraManagerBuilder(appId: appId, tokenRepository: tokenRepository)
         agoraManager = builder
             .withAudio(delegate: nil)
+            .withVideo()
             .withChannelDelegate(self)
             .build()
     }
@@ -294,5 +295,32 @@ extension GameCoordinator: ChannelEventDelegate {
     
     func didOccurError(code: AgoraErrorCode) {
         print("❌ Agora error: \(code.rawValue)")
+    }
+}
+
+// MARK: - Video Views
+extension GameCoordinator {
+    /// 各ユーザーのビデオビューを生成
+    func getVideoViews() -> [UUID: UIView] {
+        guard let agoraManager = agoraManager,
+              let videoComponent = agoraManager.video else {
+            return [:]
+        }
+        
+        var videoViews: [UUID: UIView] = [:]
+        
+        for user in users {
+            let view: UIView
+            if user.id == meId {
+                // 自分の場合はローカルビデオ
+                view = videoComponent.localVideo()
+            } else {
+                // 他のユーザーの場合はリモートビデオ
+                view = videoComponent.remoteVideo(with: user.talkId)
+            }
+            videoViews[user.id] = view
+        }
+        
+        return videoViews
     }
 }

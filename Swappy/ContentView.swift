@@ -58,6 +58,7 @@ struct ContentView: View {
             case .videoCall:
                 VideoCallView(
                     usersPublisher: coordinator.usersPublisher,
+                    videoViews: coordinator.getVideoViews(),
                     onTimeUp: {
                         coordinator.startAnswerInput()
                     },
