@@ -23,9 +23,3 @@ protocol AudioEventDelegate: AnyObject {
     func didReceiveLocalAudioFrame(_ frame: AgoraAudioFrame)
     func didReceiveRemoteAudioFrame(_ frame: AgoraAudioFrame)
 }
-
-/// ビデオ関連のイベントデリゲート（将来の拡張用）
-protocol VideoEventDelegate: AnyObject {
-    func didReceiveLocalVideoFrame(_ frame: AgoraVideoFrame)
-    func didReceiveRemoteVideoFrame(_ frame: AgoraVideoFrame, fromUid: UInt)
-}

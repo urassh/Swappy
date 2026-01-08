@@ -14,11 +14,13 @@ struct VideoCallView: View {
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
+        videoViews: [UUID: UIView],
         onTimeUp: @escaping () -> Void,
         onBack: (() -> Void)? = nil
     ) {
         self.viewModel = VideoCallViewModel(
             usersPublisher: usersPublisher,
+            videoViews: videoViews,
             onTimeUp: onTimeUp
         )
         self.onBack = onBack
@@ -86,8 +88,11 @@ struct VideoCallView: View {
                     let columns = [GridItem(.flexible(), spacing: 4), GridItem(.flexible(), spacing: 4)]
                     LazyVGrid(columns: columns, spacing: 4) {
                         ForEach(viewModel.users) { user in
-                            VideoTileView(user: user)
-                                .aspectRatio(0.8, contentMode: .fit)
+                            VideoTileView(
+                                user: user,
+                                videoView: viewModel.videoViews[user.id]
+                            )
+                            .aspectRatio(0.8, contentMode: .fit)
                         }
                     }
                     .padding(.horizontal, 0)
@@ -173,58 +178,64 @@ struct VideoCallView: View {
 
 struct VideoTileView: View {
     let user: User
+    let videoView: UIView?
     
     var body: some View {
         ZStack {
-            // ビデオプレビュー（仮のグラデーション）
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.white.opacity(0.18),
-                    Color.white.opacity(0.06),
-                    Color.white.opacity(0.12)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .background(Color.white.opacity(0.1))
-            .overlay(
+            // ビデオビューまたは仮のグラデーション
+            if let videoView = videoView {
+                VideoViewWrapper(view: videoView)
+            } else {
+                // ビデオプレビュー（仮のグラデーション）
                 LinearGradient(
                     gradient: Gradient(colors: [
-                        Color.white.opacity(0.35),
-                        Color.white.opacity(0.05),
-                        Color.white.opacity(0.2)
+                        Color.white.opacity(0.18),
+                        Color.white.opacity(0.06),
+                        Color.white.opacity(0.12)
                     ]),
-                    startPoint: .top,
-                    endPoint: .bottom
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
-                .blendMode(.screen)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.white.opacity(0.55),
-                                Color.white.opacity(0.12)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.6
+                .background(Color.white.opacity(0.1))
+                .overlay(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.white.opacity(0.35),
+                            Color.white.opacity(0.05),
+                            Color.white.opacity(0.2)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-            )
-            
-            // ユーザーアイコン
-            VStack {
-                Circle()
-                    .fill(Color.white.opacity(0.95))
-                    .frame(width: 64, height: 64)
-                    .shadow(color: Color(red: 0.22, green: 0.4, blue: 1.0).opacity(0.5), radius: 12, x: 0, y: 6)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(Color(red: 0.1, green: 0.2, blue: 0.35))
-                    )
+                    .blendMode(.screen)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    Color.white.opacity(0.55),
+                                    Color.white.opacity(0.12)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.6
+                        )
+                )
+                
+                // ユーザーアイコン
+                VStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.95))
+                        .frame(width: 64, height: 64)
+                        .shadow(color: Color(red: 0.22, green: 0.4, blue: 1.0).opacity(0.5), radius: 12, x: 0, y: 6)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 28))
+                                .foregroundColor(Color(red: 0.1, green: 0.2, blue: 0.35))
+                        )
+                }
             }
             
             // ユーザー名
@@ -287,10 +298,28 @@ struct VideoTileView: View {
 #Preview {
     VideoCallView(
         usersPublisher: PreviewData.usersPublisher,
+        videoViews: [:],
         onTimeUp: {},
         onBack: {}
     )
 }
+
+// MARK: - VideoViewWrapper
+
+/// UIViewをSwiftUIで表示するためのラッパー
+struct VideoViewWrapper: UIViewRepresentable {
+    let view: UIView
+    
+    func makeUIView(context: Context) -> UIView {
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // 更新処理は不要
+    }
+}
+
+// MARK: - Preview
 
 private enum PreviewData {
     static let users: [User] = [

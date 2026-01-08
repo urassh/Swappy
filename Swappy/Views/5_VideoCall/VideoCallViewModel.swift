@@ -13,6 +13,7 @@ import Combine
 class VideoCallViewModel {
     var timeRemaining: Int = 10
     var users: [User] = []
+    var videoViews: [UUID: UIView]
     
     private var cancellables = Set<AnyCancellable>()
     private var timer: Timer?
@@ -22,8 +23,10 @@ class VideoCallViewModel {
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
+        videoViews: [UUID: UIView],
         onTimeUp: @escaping () -> Void
     ) {
+        self.videoViews = videoViews
         self.onTimeUp = onTimeUp
         
         // usersの購読
