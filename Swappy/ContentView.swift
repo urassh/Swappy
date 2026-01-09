@@ -26,34 +26,42 @@ struct ContentView: View {
                 )
 
             case .robby:
-                RobbyView(
-                    usersPublisher: coordinator.usersPublisher,
-                    me: coordinator.me!,
-                    onMuteMic: {
-                        coordinator.toggleMute(isMuted: true)
-                    },
-                    onUnmuteMic: {
-                        coordinator.toggleMute(isMuted: false)
-                    },
-                    onStartGame: {
-                        coordinator.startGame()
-                    },
-                    onBack: {
-                        coordinator.leaveRoom()
-                        coordinator.navigate(to: .keywordInput)
-                    }
-                )
+                if let me = coordinator.me {
+                    RobbyView(
+                        usersPublisher: coordinator.usersPublisher,
+                        me: me,
+                        onMuteMic: {
+                            coordinator.toggleMute(isMuted: true)
+                        },
+                        onUnmuteMic: {
+                            coordinator.toggleMute(isMuted: false)
+                        },
+                        onStartGame: {
+                            coordinator.startGame()
+                        },
+                        onBack: {
+                            coordinator.leaveRoom()
+                            coordinator.navigate(to: .keywordInput)
+                        }
+                    )
+                } else {
+                    ProgressView("Loading...")
+                }
                 
             case .roleWaiting:
                 RoleWaitingView()
                 
             case .roleReveal:
-                RoleRevealView(
-                    myRole: coordinator.me!.role,
-                    onStartVideoCall: {
-                        coordinator.startVideoCall()
-                    }
-                )
+                if let me = coordinator.me {
+                    RoleRevealView(
+                        myRole: me.role,
+                        onStartVideoCall: {
+                            coordinator.startVideoCall()
+                        }
+                    )
+                } else {
+                    ProgressView("Loading...")
+                }
                 
             case .videoCall:
                 VideoCallView(
@@ -69,13 +77,17 @@ struct ContentView: View {
                 )
                 
             case .answerInput:
-                AnswerInputView(
-                    usersPublisher: coordinator.usersPublisher,
-                    me: coordinator.me!,
-                    onSubmit: { user in
-                        coordinator.submitAnswer(selectUser: user)
-                    }
-                )
+                if let me = coordinator.me {
+                    AnswerInputView(
+                        usersPublisher: coordinator.usersPublisher,
+                        me: me,
+                        onSubmit: { user in
+                            coordinator.submitAnswer(selectUser: user)
+                        }
+                    )
+                } else {
+                    ProgressView("Loading...")
+                }
                 
             case .answerWaiting:
                 AnswerWaitingView(
@@ -84,15 +96,19 @@ struct ContentView: View {
                 )
                 
             case .answerReveal:
-                AnswerRevealView(
-                    usersPublisher: coordinator.usersPublisher,
-                    allAnswers: coordinator.allAnswers,
-                    wolfUser: coordinator.wolfUser!,
-                    me: coordinator.me!,
-                    onRestart: {
-                        coordinator.resetGame()
-                    }
-                )
+                if let me = coordinator.me, let wolfUser = coordinator.wolfUser {
+                    AnswerRevealView(
+                        usersPublisher: coordinator.usersPublisher,
+                        allAnswers: coordinator.allAnswers,
+                        wolfUser: wolfUser,
+                        me: me,
+                        onRestart: {
+                            coordinator.resetGame()
+                        }
+                    )
+                } else {
+                    ProgressView("Loading...")
+                }
             }
         }
         .animation(.easeInOut, value: coordinator.currentScreen)
