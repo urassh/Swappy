@@ -64,17 +64,25 @@ struct ContentView: View {
                 }
                 
             case .videoCall:
-                VideoCallView(
-                    usersPublisher: coordinator.usersPublisher,
-                    videoViews: coordinator.getVideoViews(),
-                    onTimeUp: {
-                        coordinator.startAnswerInput()
-                    },
-                    onBack: {
-                        coordinator.leaveRoom()
-                        coordinator.navigate(to: .keywordInput)
-                    }
-                )
+                if let me = coordinator.me {
+                    VideoCallView(
+                        usersPublisher: coordinator.usersPublisher,
+                        videoViews: coordinator.getVideoViews(),
+                        me: me,
+                        onToggleMic: { isMuted in
+                            coordinator.setLocalAudioMuted(isMuted)
+                        },
+                        onTimeUp: {
+                            coordinator.startAnswerInput()
+                        },
+                        onBack: {
+                            coordinator.leaveRoom()
+                            coordinator.navigate(to: .keywordInput)
+                        }
+                    )
+                } else {
+                    ProgressView("Loading...")
+                }
                 
             case .answerInput:
                 if let me = coordinator.me {
