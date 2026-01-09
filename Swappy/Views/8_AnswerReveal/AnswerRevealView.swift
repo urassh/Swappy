@@ -92,16 +92,16 @@ struct AnswerRevealView: View {
                             
                             HStack(spacing: 15) {
                                 Circle()
-                                    .fill(.white)
-                                    .frame(width: 60, height: 60)
+                                    .foregroundStyle(.white.opacity(0.6))
+                                    .frame(width: 36, height: 36)
                                     .overlay(
                                         Image(systemName: "person.fill")
-                                            .font(.system(size: 30))
-                                            .foregroundStyle(.purple)
+                                            .font(.system(size: 16))
+                                            .foregroundStyle(.white)
                                     )
                                 
                                 Text(viewModel.wolfUser.name)
-                                    .font(.system(size: 28, weight: .bold))
+                                    .font(.system(size: 20, weight: .bold))
                                     .foregroundStyle(.white)
                             }
                             .padding()
