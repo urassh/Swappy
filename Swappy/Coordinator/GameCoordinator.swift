@@ -164,6 +164,15 @@ extension GameCoordinator {
         // Repositoryに送信（handleUsersChangedで最終的な状態を受け取る）
         gameRepository.toggleMute(me: me, isMuted: isMuted)
     }
+
+    /// ローカル音声だけをミュート/解除（ユーザー配列やRepositoryは更新しない）
+    func setLocalAudioMuted(_ isMuted: Bool) {
+        if isMuted {
+            agoraManager?.audio?.mute()
+        } else {
+            agoraManager?.audio?.unmute()
+        }
+    }
     
     /// ゲームを開始
     func startGame() {
