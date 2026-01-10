@@ -29,7 +29,7 @@
 //    
 //    // MARK: - Initialization
 //    
-//    init(baseURL: String = "ws://localhost:8080") {
+//    init(baseURL: String = "wss://fastapi-for-swappy.onrender.com") {
 //        self.baseURL = baseURL
 //        super.init()
 //    }
