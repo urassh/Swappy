@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local config
+local.properties
+
+# Mac
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+
+# Temp
+/tmp-agora/
