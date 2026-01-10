@@ -13,15 +13,20 @@ struct RoleWaitingView: View {
     var body: some View {
         ZStack {
             // 背景
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.35, green: 0.37, blue: 0.41),
-                    Color(red: 0.55, green: 0.58, blue: 0.64)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Image("Background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .overlay(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black.opacity(0.25),
+                            Color.black.opacity(0.35)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             
             VStack(spacing: 40) {
                 Spacer()

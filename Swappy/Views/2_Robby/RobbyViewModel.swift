@@ -31,10 +31,17 @@ class RobbyViewModel {
         self.onMuteMic = onMuteMic
         self.onUnmuteMic = onUnmuteMic
         self.onStartGame = onStartGame
+        self.isMicMuted = me.isMuted
         
         // usersの購読
         usersPublisher
-            .assign(to: \RobbyViewModel.users, on: self)
+            .sink { [weak self] users in
+                guard let self = self else { return }
+                self.users = users
+                if let updatedMe = users.first(where: { $0.id == self.me.id }) {
+                    self.isMicMuted = updatedMe.isMuted
+                }
+            }
             .store(in: &cancellables)
     }
     

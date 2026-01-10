@@ -11,10 +11,14 @@ import Combine
 struct VideoCallView: View {
     @State private var viewModel: VideoCallViewModel
     private let onBack: (() -> Void)?
+    private let onToggleMic: (Bool) -> Void
+    @State private var isMicMuted: Bool
     
     init(
         usersPublisher: AnyPublisher<[User], Never>,
         videoViews: [UUID: UIView],
+        me: User,
+        onToggleMic: @escaping (Bool) -> Void,
         onTimeUp: @escaping () -> Void,
         onBack: (() -> Void)? = nil
     ) {
@@ -23,38 +27,33 @@ struct VideoCallView: View {
             videoViews: videoViews,
             onTimeUp: onTimeUp
         )
+        self.onToggleMic = onToggleMic
+        _isMicMuted = State(initialValue: me.isMuted)
         self.onBack = onBack
     }
     
     var body: some View {
+        let currentMeMuted = isMicMuted
         ZStack {
             // 背景
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.35, green: 0.37, blue: 0.41),
-                    Color(red: 0.55, green: 0.58, blue: 0.64)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Image("Background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .overlay(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black.opacity(0.25),
+                            Color.black.opacity(0.35)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             
             VStack(spacing: 0) {
                 // ヘッダー
                 HStack {
-                    if let onBack {
-                        Button(action: { onBack() }) {
-                            Image("BackArrow")
-                                .resizable()
-                                .renderingMode(.original)
-                                .scaledToFit()
-                                .frame(width: 24, height: 24)
-                        }
-                        .padding(.leading, 22)
-                    } else {
-                        Spacer().frame(width: 24)
-                    }
-                    
                     Spacer()
                     
                     ZStack {
@@ -78,10 +77,8 @@ struct VideoCallView: View {
                     }
                     
                     Spacer()
-                    
-                    Spacer().frame(width: 24)
                 }
-                .padding(.top, 24)
+                .padding(.top, 48)
                 
                 // ビデオグリッド
                 GeometryReader { geometry in
@@ -110,42 +107,67 @@ struct VideoCallView: View {
                         .background(Color(red: 1.0, green: 0.39, blue: 0.42))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     
-                    controlBar()
+                    controlBar(isMuted: currentMeMuted)
                 }
-                .padding(.bottom, 18)
+                .padding(.bottom, 36)
             }
         }
     }
     
     @ViewBuilder
-    private func controlBar() -> some View {
-        HStack(spacing: 26) {
-            Circle()
-                .fill(Color.white.opacity(0.18))
-                .frame(width: 48, height: 48)
-                .overlay(
-                    Image(systemName: "video")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                )
-            
-            Circle()
-                .fill(Color.white.opacity(0.18))
-                .frame(width: 48, height: 48)
-                .overlay(
-                    Image(systemName: "mic")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                )
-            
-            Circle()
-                .fill(Color.white.opacity(0.18))
-                .frame(width: 48, height: 48)
-                .overlay(
-                    Image(systemName: "arrow.triangle.2.circlepath.camera")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                )
+    private func controlBar(isMuted: Bool) -> some View {
+        HStack(spacing: 18) {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 48, height: 48)
+                    .overlay(
+                        Image(systemName: "video")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    )
+                
+                Button(action: {
+                    let nextMuted = !isMuted
+                    isMicMuted = nextMuted
+                    onToggleMic(nextMuted)
+                }) {
+                    Circle()
+                        .fill(Color.white.opacity(isMuted ? 0.1 : 0.22))
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            ZStack {
+                                if isMuted {
+                                    Image("MicIcon")
+                                        .resizable()
+                                        .renderingMode(.original)
+                                        .scaledToFit()
+                                        .frame(width: 18, height: 18)
+                                    Image("IconSlash")
+                                        .resizable()
+                                        .renderingMode(.original)
+                                        .scaledToFit()
+                                        .frame(width: 22, height: 22)
+                                } else {
+                                    Image("MicOn")
+                                        .resizable()
+                                        .renderingMode(.original)
+                                        .scaledToFit()
+                                        .frame(width: 18, height: 18)
+                                }
+                            }
+                        )
+                }
+                
+                Circle()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 48, height: 48)
+                    .overlay(
+                        Image(systemName: "arrow.triangle.2.circlepath.camera")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    )
+            }
             
             Circle()
                 .fill(Color.clear)
@@ -163,6 +185,7 @@ struct VideoCallView: View {
                         .offset(y: -8)
                 )
                 .offset(y: 6)
+                .padding(.leading, 24)
         }
         .padding(.horizontal, 26)
         .background(
@@ -174,6 +197,7 @@ struct VideoCallView: View {
                 )
         )
     }
+
 }
 
 struct VideoTileView: View {
@@ -296,9 +320,12 @@ struct VideoTileView: View {
 }
 
 #Preview {
+    let me = PreviewData.users[0]
     VideoCallView(
         usersPublisher: PreviewData.usersPublisher,
         videoViews: [:],
+        me: me,
+        onToggleMic: { _ in },
         onTimeUp: {},
         onBack: {}
     )
@@ -323,7 +350,7 @@ struct VideoViewWrapper: UIViewRepresentable {
 
 private enum PreviewData {
     static let users: [User] = [
-        User(name: "勇者（あなた）", isMuted: true),
+        User(name: "勇者（あなた）", isMuted: false),
         User(name: "村人A"),
         User(name: "魔法使い"),
         User(name: "レンジャー")
