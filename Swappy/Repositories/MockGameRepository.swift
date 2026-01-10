@@ -15,10 +15,10 @@ class MockGameRepository: GameRepositoryProtocol {
     
     // イベントハンドラ
     private var onUsersChanged: (([User]) -> Void)?
-    private var onUserLeft: ((User) -> Void)?
+    private var onUserLeft: ((String) -> Void)?
     private var onGameStarted: (() -> Void)?
     private var onRolesAssigned: (([User]) -> Void)?
-    private var onAnswerSubmitted: ((PlayerAnswer) -> Void)?
+    private var onAnswerSubmitted: ((String, String) -> Void)?
     private var onError: ((String) -> Void)?
 
     private var currentKeyword: String = ""
@@ -36,10 +36,10 @@ class MockGameRepository: GameRepositoryProtocol {
     
     func setEventHandlers(
         onUsersChanged: @escaping ([User]) -> Void,
-        onUserLeft: @escaping (User) -> Void,
+        onUserLeft: @escaping (String) -> Void,
         onGameStarted: @escaping () -> Void,
         onRolesAssigned: @escaping ([User]) -> Void,
-        onAnswerSubmitted: @escaping (PlayerAnswer) -> Void,
+        onAnswerSubmitted: @escaping (String, String) -> Void,
         onError: @escaping (String) -> Void
     ) {
         self.onUsersChanged = onUsersChanged
@@ -160,7 +160,7 @@ class MockGameRepository: GameRepositoryProtocol {
                 if !keyword.isEmpty {
                     Self.rooms[keyword] = nil
                 }
-                self.onUserLeft?(me)
+                self.onUserLeft?(me.userId)
             }
         }
     }
@@ -203,19 +203,9 @@ class MockGameRepository: GameRepositoryProtocol {
     /// 回答送信のシミュレーション
     private func simulateSubmitAnswer(me: User, selectedUser: User) {
         Task {
-            // 人狼を取得
-            guard let werewolf = await MainActor.run(body: { self.users.first(where: { $0.role == .werewolf }) }) else {
-                return
-            }
-            
             // 自分の回答を送信
             await MainActor.run {
-                let myAnswer = PlayerAnswer(
-                    answer: me,
-                    selectedUser: selectedUser,
-                    isCorrect: selectedUser.id == werewolf.id
-                )
-                self.onAnswerSubmitted?(myAnswer)
+                self.onAnswerSubmitted?(me.userId, selectedUser.userId)
             }
             
             // 他のプレイヤーの回答をシミュレート（1-3秒後）
@@ -227,12 +217,7 @@ class MockGameRepository: GameRepositoryProtocol {
                     // ダミーの回答（ランダム）
                     let otherUsers = self.users.filter { $0.id != otherUser.id }
                     let randomSelectedUser = otherUsers.randomElement()!
-                    let answer = PlayerAnswer(
-                        answer: otherUser,
-                        selectedUser: randomSelectedUser,
-                        isCorrect: randomSelectedUser.id == werewolf.id
-                    )
-                    self.onAnswerSubmitted?(answer)
+                    self.onAnswerSubmitted?(otherUser.userId, randomSelectedUser.userId)
                 }
             }
         }

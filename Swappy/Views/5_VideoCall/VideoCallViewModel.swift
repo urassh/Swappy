@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import UIKit
 
 /// ビデオ通話画面のViewModel
 @Observable

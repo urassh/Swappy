@@ -11,7 +11,7 @@ struct ContentView: View {
     @State private var coordinator: GameCoordinator
 
     init() {
-        let coordinator = GameCoordinator(gameRepository: MockGameRepository())
+        let coordinator = GameCoordinator(gameRepository: WebSocketGameRepository())
         _coordinator = State(initialValue: coordinator)
     }
     

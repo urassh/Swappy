@@ -203,9 +203,9 @@ extension GameCoordinator {
                     self?.handleUsersChanged(users)
                 }
             },
-            onUserLeft: { [weak self] user in
+            onUserLeft: { [weak self] userId in
                 DispatchQueue.main.async {
-                    self?.handleUserLeft(user)
+                    self?.handleUserLeft(userId: userId)
                 }
             },
             onGameStarted: { [weak self] in
@@ -218,9 +218,9 @@ extension GameCoordinator {
                     self?.handleRolesAssigned(users: users)
                 }
             },
-            onAnswerSubmitted: { [weak self] answer in
+            onAnswerSubmitted: { [weak self] userId, answerUserId in
                 DispatchQueue.main.async {
-                    self?.handleAnswerSubmitted(answer)
+                    self?.handleAnswerSubmitted(userId: userId, answerUserId: answerUserId)
                 }
             },
             onError: { [weak self] message in
@@ -237,8 +237,15 @@ extension GameCoordinator {
         users = allUsers
     }
     
-    private func handleUserLeft(_ user: User) {
-        users.removeAll { $0.id == user.id }
+    private func handleUserLeft(userId: String) {
+        // userIdでユーザーを検索して削除
+        if let index = users.firstIndex(where: { $0.userId == userId }) {
+            let removedUser = users[index]
+            users.remove(at: index)
+            print("👋 User left: \(removedUser.name) (userId: \(userId))")
+        } else {
+            print("⚠️ 警告: 離脱したユーザーが見つかりませんでした (userId: \(userId))")
+        }
     }
     
     private func handleGameStarted() {
@@ -254,10 +261,45 @@ extension GameCoordinator {
         navigate(to: .roleReveal)
     }
     
-    private func handleAnswerSubmitted(_ answer: PlayerAnswer) {
+    private func handleAnswerSubmitted(userId: String, answerUserId: String) {
+        // userIdで回答したユーザーを検索
+        guard let answerUser = users.first(where: { $0.userId == userId }) else {
+            print("⚠️ 警告: 回答したユーザーが見つかりません (userId: \(userId))")
+            return
+        }
+        
+        // answerUserIdで選択されたユーザーを検索
+        var selectedUser = users.first(where: { $0.userId == answerUserId })
+        
+        // 見つからない場合はフォールバック: 他のユーザーを自動選択
+        if selectedUser == nil {
+            print("⚠️ 警告: 選択されたユーザーが見つかりません (answerUserId: \(answerUserId))")
+            // 回答者以外のユーザーを自動選択
+            selectedUser = users.first(where: { $0.userId != userId })
+            
+            if let fallbackUser = selectedUser {
+                print("ℹ️ フォールバック: \(fallbackUser.name) を自動選択しました")
+            } else {
+                print("❌ エラー: フォールバック用のユーザーも見つかりません")
+                return
+            }
+        }
+        
+        guard let finalSelectedUser = selectedUser else { return }
+        
+        // 正解判定: 選択したユーザーが人狼かどうか
+        let isCorrect = finalSelectedUser.isWolf
+        
+        let playerAnswer = PlayerAnswer(
+            answer: answerUser,
+            selectedUser: finalSelectedUser,
+            isCorrect: isCorrect
+        )
+        
         // 重複チェック（同じユーザーの回答は一度だけ）
-        if !allAnswers.contains(where: { $0.answer.id == answer.answer.id }) {
-            allAnswers.append(answer)
+        if !allAnswers.contains(where: { $0.answer.id == answerUser.id }) {
+            allAnswers.append(playerAnswer)
+            print("✅ 回答追加: \(answerUser.name) → \(finalSelectedUser.name) (isCorrect: \(isCorrect))")
         }
         
         // 全員の回答が揃ったらAnswerRevealに遷移
