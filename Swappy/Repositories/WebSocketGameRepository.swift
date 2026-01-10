@@ -10,8 +10,8 @@ import Foundation
 class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSocketDelegate {
     
     // MARK: - Constants
-    private let baseURL = "http://localhost:8000"
-    private let wsBaseURL = "ws://localhost:8000"
+    private let baseURL = "https://fastapi-for-swappy.onrender.com"
+    private let wsBaseURL = "wss://fastapi-for-swappy.onrender.com"
     
     // MARK: - Properties
     private var webSocketTask: URLSessionWebSocketTask?
