@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,11 +34,14 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.swappy.android.R
 import com.swappy.android.data.User
+import com.swappy.android.ui.theme.SwappyTheme
+import java.util.UUID
 
 @Composable
 fun RobbyScreen(
@@ -77,7 +81,9 @@ fun RobbyScreen(
                 Image(
                     painter = painterResource(R.drawable.swappy_arrow),
                     contentDescription = null,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier
+                        .size(28.dp)
+                        .offset(y = 110.dp)
                 )
             }
 
@@ -154,6 +160,8 @@ fun RobbyScreen(
                 enabled = canStartGame,
                 onClick = onStartGame
             )
+
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
@@ -305,4 +313,27 @@ private fun XmlDrawableImage(
         update = { it.setImageResource(resId) },
         modifier = modifier
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RobbyScreenPreview() {
+    val me = User(id = UUID(0L, 1L), name = "あなた", isMuted = false, isReady = true)
+    val users = listOf(
+        me,
+        User(id = UUID(0L, 2L), name = "Sora", isMuted = true, isReady = true),
+        User(id = UUID(0L, 3L), name = "Mika", isMuted = false, isReady = false),
+        User(id = UUID(0L, 4L), name = "Ken", isMuted = false, isReady = true)
+    )
+
+    SwappyTheme {
+        RobbyScreen(
+            users = users,
+            me = me,
+            onMuteMic = {},
+            onUnmuteMic = {},
+            onStartGame = {},
+            onBack = {}
+        )
+    }
 }
