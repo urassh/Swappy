@@ -59,7 +59,7 @@ class GameCoordinator {
     private(set) var agoraManager: AgoraManager?
     private var didSendReady: Bool = false
     
-    private let appId = "test-mode"
+    private let appId = "0db12f5041c74e86946438338a568569"
     
     
     init(gameRepository: GameRepositoryProtocol = MockGameRepository()) {
@@ -113,6 +113,7 @@ extension GameCoordinator {
         
         let newUser = User(name: userName)
         self.meId = newUser.id
+        self.users.append(newUser)
         
         // Agora Managerをセットアップ
         setupAgoraManager()
