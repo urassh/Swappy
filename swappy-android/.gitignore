@@ -21,3 +21,4 @@ local.properties
 
 # keep local copy outside repo
 ../android_old/
+../android/
