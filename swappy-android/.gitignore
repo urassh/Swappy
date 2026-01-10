@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local config
+local.properties
+
+# Mac
+.DS_Store
+
+# IDE
+.idea/
+*.iml
+
+# Temp
+/tmp-agora/
+
+# local junk
+.DS_Store
+
+# keep local copy outside repo
+../android_old/
+../android/
