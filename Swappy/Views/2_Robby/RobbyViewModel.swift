@@ -46,13 +46,13 @@ class RobbyViewModel {
     
     /// ゲーム開始可能かどうか
     var canStartGame: Bool {
-        users.count >= 3 && allUsersReady
+        users.count >= 2 && allUsersReady
     }
     
     /// ゲーム開始できない理由
     var startGameDisabledReason: String? {
-        if users.count < 3 {
-            return "ゲームには3人以上が必要です"
+        if users.count < 2 {
+            return "ゲームには2人以上が必要です"
         }
         if !allUsersReady {
             return "プレイヤー全員が準備完了ではありません"

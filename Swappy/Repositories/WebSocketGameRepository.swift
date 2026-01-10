@@ -168,6 +168,7 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
     
     private func createRoom(keyword: String) async throws -> String {
         guard let url = URL(string: "\(baseURL)/rooms/") else {
+            print("❌ Invalid URL: \(baseURL)/rooms/")
             throw URLError(.badURL)
         }
         
@@ -178,23 +179,38 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
         let body = ["keyword": keyword]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
+        print("🌐 Creating room with keyword: \(keyword)")
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ Invalid response type")
             throw URLError(.badServerResponse)
+        }
+        
+        print("📡 Server response status: \(httpResponse.statusCode)")
+        
+        if httpResponse.statusCode != 200 {
+            if let errorString = String(data: data, encoding: .utf8) {
+                print("❌ Server error response: \(errorString)")
+            }
+            throw NSError(domain: "CreateRoom", code: httpResponse.statusCode, userInfo: [
+                NSLocalizedDescriptionKey: "Server returned status code \(httpResponse.statusCode)"
+            ])
         }
         
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         guard let roomId = json?["room_id"] as? String else {
+            print("❌ Cannot parse room_id from response: \(String(data: data, encoding: .utf8) ?? "(invalid data)")")
             throw URLError(.cannotParseResponse)
         }
         
+        print("✅ Room created successfully with ID: \(roomId)")
         return roomId
     }
     
     private func addUserToRoom(roomId: String, user: User) async throws {
         guard let url = URL(string: "\(baseURL)/rooms/\(roomId)/users") else {
+            print("❌ Invalid URL: \(baseURL)/rooms/\(roomId)/users")
             throw URLError(.badURL)
         }
         
@@ -208,12 +224,26 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-        let (_, response) = try await URLSession.shared.data(for: request)
+        print("👤 Adding user to room: \(roomId), userId: \(user.userId), name: \(user.name)")
+        let (data, response) = try await URLSession.shared.data(for: request)
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ Invalid response type")
             throw URLError(.badServerResponse)
         }
+        
+        print("📡 Add user response status: \(httpResponse.statusCode)")
+        
+        if httpResponse.statusCode != 200 {
+            if let errorString = String(data: data, encoding: .utf8) {
+                print("❌ Server error response: \(errorString)")
+            }
+            throw NSError(domain: "AddUserToRoom", code: httpResponse.statusCode, userInfo: [
+                NSLocalizedDescriptionKey: "Server returned status code \(httpResponse.statusCode)"
+            ])
+        }
+        
+        print("✅ User added to room successfully")
     }
     
     private func removeUserFromRoom(roomId: String, userId: String) async throws {
@@ -250,6 +280,8 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
               httpResponse.statusCode == 200 else {
             throw URLError(.badServerResponse)
         }
+
+        print("✅ Ready state updated successfully for userId: \(userId), isReady: \(isReady)")
     }
     
     private func updateMuteState(roomId: String, userId: String, isMuted: Bool) async throws {
@@ -332,14 +364,17 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
     
     private func connectWebSocket(roomId: String) async throws {
         guard let url = URL(string: "\(wsBaseURL)/ws/rooms/\(roomId)") else {
+            print("❌ Invalid WebSocket URL: \(wsBaseURL)/ws/rooms/\(roomId)")
             throw URLError(.badURL)
         }
         
+        print("🔌 Connecting to WebSocket: \(url.absoluteString)")
         webSocketTask = urlSession.webSocketTask(with: url)
         webSocketTask?.resume()
         
         // メッセージ受信を開始
         receiveMessages()
+        print("✅ WebSocket connection initiated")
     }
     
     private func disconnectWebSocket() {

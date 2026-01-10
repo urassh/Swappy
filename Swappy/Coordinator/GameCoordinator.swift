@@ -240,6 +240,7 @@ extension GameCoordinator {
     // MARK: - Event Handlers
     
     private func handleUsersChanged(_ allUsers: [User]) {
+        print("👥 Users changed: \(allUsers.map { $0.name })")
         users = allUsers
     }
     
