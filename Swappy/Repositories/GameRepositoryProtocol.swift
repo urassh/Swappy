@@ -17,6 +17,7 @@ protocol GameRepositoryProtocol {
         onGameStarted: @escaping () -> Void,                         // ゲームが開始された時
         onRolesAssigned: @escaping ([User]) -> Void,                 // 各ユーザにロールがアサインされた時（[User]）
         onAnswerSubmitted: @escaping (String, String) -> Void,       // ユーザが回答を送信した時（user_id, answer_user_id）
+        onGameReset: @escaping () -> Void,                           // ゲームがリセットされた時
         onError: @escaping (String) -> Void                          // エラーが発生した時
     )
     

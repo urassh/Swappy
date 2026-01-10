@@ -19,6 +19,7 @@ class MockGameRepository: GameRepositoryProtocol {
     private var onGameStarted: (() -> Void)?
     private var onRolesAssigned: (([User]) -> Void)?
     private var onAnswerSubmitted: ((String, String) -> Void)?
+    private var onGameReset: (() -> Void)?
     private var onError: ((String) -> Void)?
 
     private var currentKeyword: String = ""
@@ -40,6 +41,7 @@ class MockGameRepository: GameRepositoryProtocol {
         onGameStarted: @escaping () -> Void,
         onRolesAssigned: @escaping ([User]) -> Void,
         onAnswerSubmitted: @escaping (String, String) -> Void,
+        onGameReset: @escaping () -> Void,
         onError: @escaping (String) -> Void
     ) {
         self.onUsersChanged = onUsersChanged
@@ -47,6 +49,7 @@ class MockGameRepository: GameRepositoryProtocol {
         self.onGameStarted = onGameStarted
         self.onRolesAssigned = onRolesAssigned
         self.onAnswerSubmitted = onAnswerSubmitted
+        self.onGameReset = onGameReset
         self.onError = onError
     }
     

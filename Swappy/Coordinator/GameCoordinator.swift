@@ -223,6 +223,11 @@ extension GameCoordinator {
                     self?.handleAnswerSubmitted(userId: userId, answerUserId: answerUserId)
                 }
             },
+            onGameReset: { [weak self] in
+                DispatchQueue.main.async {
+                    self?.handleGameReset()
+                }
+            },
             onError: { [weak self] message in
                 DispatchQueue.main.async {
                     self?.handleError(message)
@@ -306,6 +311,14 @@ extension GameCoordinator {
         if allAnswers.count == users.count && currentScreen == .answerWaiting {
             navigate(to: .answerReveal)
         }
+    }
+    
+    private func handleGameReset() {
+        print("🔄 Game reset received")
+        // 状態を完全にクリーン
+        clean()
+        // キーワード入力画面に戻る
+        navigate(to: .keywordInput)
     }
     
     private func handleError(_ message: String) {

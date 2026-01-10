@@ -24,6 +24,7 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
     private var onGameStarted: (() -> Void)?
     private var onRolesAssigned: (([User]) -> Void)?
     private var onAnswerSubmitted: ((String, String) -> Void)?
+    private var onGameReset: (() -> Void)?
     private var onError: ((String) -> Void)?
     
     // MARK: - Initialization
@@ -40,6 +41,7 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
         onGameStarted: @escaping () -> Void,
         onRolesAssigned: @escaping ([User]) -> Void,
         onAnswerSubmitted: @escaping (String, String) -> Void,
+        onGameReset: @escaping () -> Void,
         onError: @escaping (String) -> Void
     ) {
         self.onUsersChanged = onUsersChanged
@@ -47,6 +49,7 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
         self.onGameStarted = onGameStarted
         self.onRolesAssigned = onRolesAssigned
         self.onAnswerSubmitted = onAnswerSubmitted
+        self.onGameReset = onGameReset
         self.onError = onError
     }
     
@@ -477,9 +480,8 @@ class WebSocketGameRepository: NSObject, GameRepositoryProtocol, URLSessionWebSo
     }
     
     private func handleGameReset() {
-        // ゲームリセットの通知を適切なハンドラに伝える
-        // 現在のプロトコルではonGameResetがないため、必要に応じて追加
         print("ゲームがリセットされました")
+        onGameReset?()
     }
     
     // MARK: - Helper Methods
