@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:gravity="center"
+        android:top="16dp"
+        android:drawable="@drawable/swappy_figma1_ellipse" />
+    <item
+        android:drawable="@drawable/swappy_tab_mic"
+        android:gravity="center"
+        android:width="23dp"
+        android:height="33dp" />
+</layer-list>
