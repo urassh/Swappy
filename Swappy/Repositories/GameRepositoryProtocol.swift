@@ -13,10 +13,10 @@ protocol GameRepositoryProtocol {
     /// イベントハンドラを設定
     func setEventHandlers(
         onUsersChanged: @escaping ([User]) -> Void,                  // ユーザーリストが変更された時（参加、準備状態変更、ミュート状態変更）
-        onUserLeft: @escaping (User) -> Void,                        // ユーザ(自分含む)がチャンネルから離脱された時
+        onUserLeft: @escaping (String) -> Void,                      // ユーザ(自分含む)がチャンネルから離脱された時（user_id）
         onGameStarted: @escaping () -> Void,                         // ゲームが開始された時
         onRolesAssigned: @escaping ([User]) -> Void,                 // 各ユーザにロールがアサインされた時（[User]）
-        onAnswerSubmitted: @escaping (PlayerAnswer) -> Void,         // ユーザが回答を送信した時（個別）
+        onAnswerSubmitted: @escaping (String, String) -> Void,       // ユーザが回答を送信した時（user_id, answer_user_id）
         onError: @escaping (String) -> Void                          // エラーが発生した時
     )
     
