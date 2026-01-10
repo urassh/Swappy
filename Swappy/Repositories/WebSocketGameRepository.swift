@@ -59,7 +59,7 @@
 //        self.currentUserId = me.id
 //        
 //        // WebSocket接続を確立
-//        guard let url = URL(string: "\(baseURL)/ws/rooms/\(keyword)") else {
+//        guard let url = URL(string: "\(baseURL)/game/\(keyword)") else {
 //            throw GameRepositoryError.invalidURL
 //        }
 //        
