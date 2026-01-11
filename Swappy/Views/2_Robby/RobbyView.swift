@@ -33,15 +33,20 @@ struct RobbyView: View {
     var body: some View {
         ZStack {
             // 背景
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.35, green: 0.37, blue: 0.41),
-                    Color(red: 0.55, green: 0.58, blue: 0.64)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Image("Background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .overlay(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black.opacity(0.25),
+                            Color.black.opacity(0.35)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             
             VStack(spacing: 30) {
                 // ヘッダー
@@ -71,8 +76,8 @@ struct RobbyView: View {
                             .foregroundColor(.white.opacity(0.7))
                     }
                 }
-                .padding(.top, 50)
-                
+                .padding(.top, 65)
+
                 // 参加者リスト
                 ScrollView {
                     VStack(spacing: 15) {
@@ -163,7 +168,7 @@ struct RobbyView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.bottom, 2)
+                    .padding(.top, 20)
                 }
                 // コントロール
                 VStack(spacing: 4) {
@@ -294,7 +299,7 @@ struct RobbyView: View {
                     .disabled(!viewModel.canStartGame)
                     .padding(.horizontal, 30)
                 }
-                .padding(.bottom, 16)
+                .padding(.bottom, 80)
             }
         }
     }

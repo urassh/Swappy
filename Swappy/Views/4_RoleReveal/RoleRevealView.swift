@@ -21,15 +21,20 @@ struct RoleRevealView: View {
     var body: some View {
         ZStack {
             // 背景のグラデーション
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color(red: 0.35, green: 0.37, blue: 0.41),
-                    Color(red: 0.55, green: 0.58, blue: 0.64)
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            Image("Background")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .overlay(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color.black.opacity(0.25),
+                            Color.black.opacity(0.35)
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
             
             VStack(spacing: 40) {
                 Spacer()
@@ -40,24 +45,6 @@ struct RoleRevealView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 10)
-                    .background(
-                        Capsule()
-                            .fill(.ultraThinMaterial)
-                            .overlay(
-                                Capsule()
-                                    .stroke(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                Color.white.opacity(0.5),
-                                                Color.white.opacity(0.15)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            )
-                    )
                     .opacity(showRole ? 0 : 1)
                     .animation(.easeInOut(duration: 0.5), value: showRole)
                 
@@ -118,7 +105,7 @@ struct RoleRevealView: View {
                         // 説明文
                         Text(getRoleDescription())
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 30)
                     }
@@ -150,7 +137,7 @@ struct RoleRevealView: View {
                             .padding(.vertical, 15)
                             .background(
                                 Capsule()
-                                    .fill(.ultraThinMaterial)
+                                    .fill(getRoleButtonGradient())
                                     .overlay(
                                         Capsule()
                                             .stroke(
@@ -166,6 +153,8 @@ struct RoleRevealView: View {
                                             )
                                     )
                             )
+                            .shadow(color: getRoleButtonShadowColor().opacity(0.45), radius: 10, x: 0, y: 6)
+                            .shadow(color: getRoleButtonShadowColor().opacity(0.25), radius: 18, x: 0, y: 12)
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -247,24 +236,35 @@ struct RoleRevealView: View {
     @ViewBuilder
     private func roleTitleView() -> some View {
         let title = getRoleText()
+        let titleFont = Font.custom("Avenir Next", size: 36).weight(.semibold)
         switch viewModel.role {
         case .werewolf, .villager:
             let baseColor = getRoleTitleBaseColor()
             ZStack {
+                // Text outline
                 Text(title)
-                    .font(.custom("Avenir Next", size: 36).weight(.semibold))
+                    .font(titleFont)
+                    .foregroundColor(Color.white.opacity(1))
+                    .shadow(color: Color.white.opacity(0.8), radius: 0, x: 0.7, y: 0)
+                    .shadow(color: Color.white.opacity(0.8), radius: 0, x: -0.7, y: 0)
+                    .shadow(color: Color.white.opacity(0.8), radius: 0, x: 0, y: 0.7)
+                    .shadow(color: Color.white.opacity(0.8), radius: 0, x: 0, y: -0.7)
+                    .shadow(color: Color.white.opacity(0.2), radius: 1.2, x: 0, y: 0)
+
+                Text(title)
+                    .font(titleFont)
                     .foregroundColor(baseColor.opacity(0.55))
                     .shadow(color: baseColor.opacity(0.25), radius: 8, x: 0, y: 4)
 
                 Text(title)
-                    .font(.custom("Avenir Next", size: 36).weight(.semibold))
+                    .font(titleFont)
                     .foregroundColor(Color.white.opacity(0.55))
                     .shadow(color: Color.white.opacity(0.45), radius: 1, x: 0, y: 0)
                     .shadow(color: Color.white.opacity(0.25), radius: 2, x: 0, y: 0)
                     .blendMode(.screen)
                 
                 Text(title)
-                    .font(.custom("Avenir Next", size: 36).weight(.semibold))
+                    .font(titleFont)
                     .overlay(
                         LinearGradient(
                             gradient: Gradient(colors: [
@@ -279,12 +279,12 @@ struct RoleRevealView: View {
                     )
                     .mask(
                         Text(title)
-                            .font(.custom("Avenir Next", size: 36).weight(.semibold))
+                            .font(titleFont)
                     )
                     .shadow(color: baseColor.opacity(0.4), radius: 10, x: 0, y: 6)
                 
                 Text(title)
-                    .font(.custom("Avenir Next", size: 36).weight(.semibold))
+                    .font(titleFont)
                     .foregroundColor(baseColor.opacity(0.3))
                     .blur(radius: 1.2)
             }
@@ -320,6 +320,49 @@ struct RoleRevealView: View {
             return Color.blue
         case .undefined:
             return Color.gray
+        }
+    }
+
+    private func getRoleButtonGradient() -> LinearGradient {
+        switch viewModel.role {
+        case .werewolf:
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.98, green: 0.25, blue: 0.3),
+                    Color(red: 0.65, green: 0.1, blue: 0.18)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .villager:
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 0.26, green: 0.55, blue: 1.0),
+                    Color(red: 0.12, green: 0.26, blue: 0.9)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        default:
+            return LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.gray.opacity(0.6),
+                    Color.gray.opacity(0.9)
+                ]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    private func getRoleButtonShadowColor() -> Color {
+        switch viewModel.role {
+        case .werewolf:
+            return Color(red: 0.95, green: 0.2, blue: 0.25)
+        case .villager:
+            return Color(red: 0.2, green: 0.45, blue: 1.0)
+        default:
+            return Color.black.opacity(0.3)
         }
     }
     
